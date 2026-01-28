@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.ac.sitp.infrared.datasource.mapper.NaturalDisasterMapper">
+
+    <select id="selectNaturalDisasterList" resultType="cn.ac.sitp.infrared.datasource.dao.NaturalDisaster">
+        select nd.id,
+        nd.disaster_no as disasterNo,
+        nd.is_historic as isHistoric,
+        nd.classfication_key as classificationKey,
+        nd.disaster_group as disasterGroup,
+        nd.disaster_type as disasterType,
+        nd.disaster_subtype as disasterSubtype,
+        nd.external_ids as externalIds,
+        nd.event_name as eventName,
+        nd.iso,
+        nd.country,
+        nd.subregion,
+        nd.region,
+        nd.location,
+        nd.origin,
+        nd.associated_types as associatedTypes,
+        nd."is_ofda/bha_response" as isOFDAOrBHAResponse,
+        nd.is_appeal as isAppeal,
+        nd.is_declaration as isDeclaration,
+        nd.aid_contribution as aidContribution,
+        nd.magnitude,
+        nd.magnitude_scale as magnitudeScale,
+        nd.latitude,
+        nd.longitude,
+        nd.river_basin as riverBasin,
+        nd.start_year as startYear,
+        nd.start_month as startMonth,
+        nd.start_day as startDay,
+        nd.end_year as endYear,
+        nd.end_month as endMonth,
+        nd.end_day as endDay,
+        nd.total_deaths as totalDeaths,
+        nd.no_injured as noInjured,
+        nd.no_affected as noAffected,
+        nd.no_homeless as noHomeless,
+        nd.total_affected as totalAffected,
+        nd.resonctruction_costs as reconstructionCosts,
+        nd.reconstruction_costs_adjusted as reconstructionCostsAdjusted,
+        nd.insured_damage as insuredDamage,
+        nd.insured_damage_adjusted as insuredDamageAdjusted,
+        nd.total_damage as totalDamage,
+        nd.total_damage_adjusted as totalDamageAdjusted,
+        nd.cpi,
+        nd.admin_units as adminUnits,
+        nd.entry_date as entryDate,
+        nd.last_update as lastUpdate,
+        nd.disaster_subgroup as disasterSubgroup,
+        nd.img_path as imgPath,
+        nd.description
+        from natural_disaster nd
+        where longitude is not null and latitude is not null
+        order by nd.id
+        <where>
+            <if test="country != null">
+                and nd.country like '%' || #{country} || '%'
+            </if>
+            <if test="place != null">
+                and nd.location like '%' || #{place} || '%'
+            </if>
+            <if test="type != null">
+                and nd.disaster_type like '%' || #{type} || '%'
+            </if>
+            <if test="begin_date != null">
+                and #{begin_date} &gt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp
+            </if>
+            <if test="end_date != null">
+                and #{end_date} &lt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp
+            </if>
+        </where>
+        limit #{page_size} offset #{offset}
+    </select>
+
+    <select id="selectNaturalDisasterCount" resultType="int">
+        select count(*) from natural_disaster
+        where longitude is not null and latitude is not null
+        <where>
+            <if test="country != null">
+                and nd.country like '%' || #{country} || '%'
+            </if>
+            <if test="place != null">
+                and nd.location like '%' || #{place} || '%'
+            </if>
+            <if test="type != null">
+                and nd.disaster_type like '%' || #{type} || '%'
+            </if>
+            <if test="begin_date != null">
+                and #{begin_date} &gt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp
+            </if>
+            <if test="end_date != null">
+                and #{end_date} &lt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp
+            </if>
+        </where>
+    </select>
+
+    <select id="getImgPathById" resultType="cn.ac.sitp.infrared.datasource.dao.Img">
+        select img.id,
+        img.img_path as imgPath,
+        img.time,
+        ST_AsGeoJSON(img.geometry) as geometry,
+        img.img_type as imgType,
+        img.longitude,
+        img.latitude
+        from img
+        where natural_disaster_id = #{id}
+        <if test="img_type != null">
+            and img_type = #{img_type}
+        </if>
+        order by img.id
+    </select>
+
+    <select id="selectNaturalDisasterTypeList" resultType="java.lang.String">
+        select distinct disaster_type as disasterType from natural_disaster
+    </select>
+</mapper>

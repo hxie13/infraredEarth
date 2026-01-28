@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <!--<script src="https://api.map.baidu.com/getscript?v=3.0&ak=ZKLyEoFl9EC7zHeveDyvVUkbq7eI5Vs0"></script>-->
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="geoInfoPanel" style="width: 600px; position:absolute; bottom:53px; right:10px; background:rgba(255,255,255,0.3); padding:5px; color:white; border-radius:3px;">
+	  <div>
+		地图级别: <span id="zoomLevel">--</span> 
+		比例尺: 1:<span id="mapScale">--</span>
+		坐标: <span id="coordinate">--, --</span>
+	  </div>
+  </div>
+  <script type="module">
+    // Your access token can be found at: https://ion.cesium.com/tokens.
+    // This is the default access token from your ion account
+	
+	import { draw } from './js/draw.js' // 我的ts文件
+	
+	class EarthRotator {
+		constructor(viewer) {
+			this.viewer = viewer;
+			this.rotateActive = false;
+			this.delta = 0.001; // 每帧旋转角度
+		}
+
+		start() {
+			this.rotateActive = true;
+			this.viewer.scene.postUpdate.addEventListener(this.rotate);
+		}
+
+		stop() {
+			this.rotateActive = false;
+			this.viewer.scene.postUpdate.removeEventListener(this.rotate);
+		}
+
+		rotate = () => {
+			if (this.rotateActive) {
+				viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
+			}
+		};
+	}
+	
+	const primitives = new Map();
+	const entities = new Map();
+	const billboards = new Map();
+	const timer = new Array();
+	let currentIndex = 0;
+	const imgArr = new Array();
+	
+	const inactiveColor = Cesium.Color.fromBytes(51, 153, 204);
+	const activeColor = Cesium.Color.RED;
+	
+	let priviousEntity;
+	let currEntity;
+	
+	Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZjU4YmI5NS0xOTkxLTQyMWItOWE2ZS1hZGNhYTU1YzRlNTQiLCJpZCI6MzE4MTAyLCJpYXQiOjE3NTE1MjkwMDR9.8WjfY2pPzxw6kVxpSk6a0PHycFOUUcb4jyNh9j8lpW4';
+	
+	const viewer = new Cesium.Viewer("cesiumContainer", {
+		geocoder: false, // 地理编码搜索框
+        homeButton: false, // 主页按钮
+		baseLayerPicker: false, // 底图选择器,
+		fullscreenButton: false,
+	});
+	
+	const gdBasicLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
+	  url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+	  style: 'default',
+	  format: 'image/png',
+	  tileMatrixSetID: 'GoogleMapsCompatible',
+	}));
+
+	// 加载高德地图影像地理标签
+	const gdLabelLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
+	  url: 'http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
+	  style: 'default',
+	  format: 'image/jpeg',
+	  tileMatrixSetID: 'GoogleMapsCompatible',
+	}));
+
+	//viewer.imageryLayers.add(gdBasicLayer);
+	//viewer.imageryLayers.add(gdLabelLayer);
+	
+	const tdtKey = 'a090fdbe1ebf350ab3eba3adef7d3417';
+	// 加载天地图影像底图
+	const tdtBasicLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
+	  url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
+	  layer: "tdtBasicLayer",
+	  style: "default",
+	  format: "image/jpeg",
+	  tileMatrixSetID: "GoogleMapsCompatible",
+	}));
+
+	// 加载天地图影像地理标签
+	const tdtLabelLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
+	  url: `http://t0.tianditu.gov.cn/cia_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cia&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
+	  layer: "tdtAnnoLayer",
+	  style: "default",
+	  format: "image/jpeg",
+	  tileMatrixSetID: "GoogleMapsCompatible",
+	}));
+
+	viewer.imageryLayers.add(tdtBasicLayer);
+	viewer.imageryLayers.add(tdtLabelLayer);
+	
+	viewer.cesiumWidget.creditContainer.style.display = "none";
+	
+	const layers = viewer.scene.imageryLayers;
+	
+	// 抗锯齿
+    viewer.scene.fxaa = true;
+    viewer.scene.postProcessStages.fxaa.enabled=false;
+    // 水雾特效
+    viewer.scene.globe.showGroundAtmosphere = true;
+    // 设置最大俯仰角，[-90,0]区间内，默认为-30，单位弧度
+    viewer.scene.screenSpaceCameraController.constrainedPitch = Cesium.Math.toRadians(-20);
+    viewer.scene.screenSpaceCameraController.autoResetHeadingPitch = false;
+    viewer.scene.screenSpaceCameraController.inertiaZoom = 0.5;
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
+    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 20000000;
+	
+	viewer.scene.globe.depthTestAgainstTerrain = false;
+
+
+    // Fly the camera to San Francisco at the given longitude, latitude, and height.
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(103.84, 31.15, 9500000),
+      /*orientation: {
+        heading: Cesium.Math.toRadians(0.0),
+        pitch: Cesium.Math.toRadians(-15.0),
+      }*/
+    });	
+	
+	
+	// 使用示例
+	//const rotator = new EarthRotator(viewer);
+	//rotator.start();
+
+	// 点击停止
+	viewer.screenSpaceEventHandler.setInputAction(() => {
+		if (rotator) {
+			rotator.stop();
+		}
+	}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+	
+	const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+	handler.setInputAction(movement => {
+	  const cartesian = viewer.scene.globe.pick(
+		viewer.camera.getPickRay(movement.endPosition),
+		viewer.scene
+	  );
+	  if (!cartesian) {
+		return;
+	  }
+	  const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+	  const lon = Cesium.Math.toDegrees(cartographic.longitude);
+	  const lat = Cesium.Math.toDegrees(cartographic.latitude);
+	  document.getElementById('coordinate').textContent = lon + ',' + lat;
+	}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+	
+	viewer.scene.postRender.addEventListener(() => {
+	  // 更新层级
+	  document.getElementById('zoomLevel').textContent = getZoomLevel(viewer);
+	  
+	  // 更新比例尺
+	  let scale = null;
+	  if (viewer.scene.mode == Cesium.SceneMode.SCENE2D) {
+		scale = calculateScaleDenominatorFor2D(viewer);
+	  } else {
+		scale = calculateScaleDenominatorFor3D(viewer);
+	  }
+	  document.getElementById('mapScale').textContent = Math.round(scale.scale);
+	  
+	  // 坐标通过独立事件更新（避免频繁计算）
+	});
+
+	/*viewer.resolutionScale = 0.7;
+	viewer.scene.fxaa = false;
+	viewer.scene.postProcessStages.fxaa.enabled = false;*/
+	
+	window.addEventListener('message', (event) => {
+		// 验证来源以确保安全
+		//if (event.origin !== 'http://192.168.0.36') 
+		//	return;
+		console.log('Received data:', event.data);
+		if (event.data.operation == 'startDrawing') {
+			drawer.cleanup();
+			drawer.startDrawing();
+		} else if (event.data.operation == 'drawPolygon') {
+			draw(viewer, 'Rectangle', { continueDraw: false, removeLast: false }, entity => {
+			  console.log('👉 ~ 多边形实体:', entity)
+			});
+		} else if (event.data.operation == 'cleanup') {
+			cleanup();
+		} else if (event.data.operation == 'findPosition') {
+			getCoordinatesFromAddr(event.data.position);
+		} else if (event.data.operation == 'searchPosition') {
+			loadGeoJson(event.data.position);
+		} else if (event.data.operation == 'loadImgResult') {
+			loadImgResultUseEntity(event.data.imgAddr, event.data.leftUpPos, event.data.rightBottomPos, event.data.id);
+		} else if (event.data.operation == 'active') {
+			activePrimitive(event.data.id);
+		} else if (event.data.operation == 'inactive') {
+			inactiveImgResultUseEntity(event.data.id);
+		} else if (event.data.operation == 'markPosition') {
+			markPosition(event.data.lon, event.data.lat, event.data.id, event.data.imgAddr);
+		} else if (event.data.operation == 'loadMulImgResult') {
+			loadMulImgResultWithVideo(event.data.imgAddrArr, event.data.leftUpPos, event.data.rightBottomPos);
+		}
+		
+	});
+	
+	function cleanup() {
+		viewer.entities.removeAll();
+		viewer.scene.primitives.removeAll();
+		primitives.clear();
+		for (let t of timer) {
+			window.clearInterval(t);
+		}
+		timer.length = 0;
+		currentIndex = 0;
+	}
+	
+	function getCoordinatesFromAddr(addr) {
+		return fetch(`http://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${addr}"}&tk=${tdtKey}`)
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				if (data.status === '0' && data.location) {
+					console.log(data.location);
+					return {lng: data.location.lng, lat: data.location.lat};
+				} else {
+					alert("未知的地点");
+				}
+			});
+	}
+	
+	function removeByFixedStep(arr, step = 2) {
+	  return arr.filter((_, index) => index % step == 0);
+	}
+	
+	function calculateScaleForBounds(viewer, minLon, minLat, maxLon, maxLat) {
+	  const ellipsoid = viewer.scene.globe.ellipsoid;
+	  const centerLat = (minLat + maxLat) / 2; // 中心纬度减少误差
+	  
+	  // 计算地理距离
+	  const geodesic = new Cesium.EllipsoidGeodesic();
+	  const start = Cesium.Cartographic.fromDegrees(minLon, centerLat);
+	  const end = Cesium.Cartographic.fromDegrees(maxLon, centerLat);
+	  geodesic.setEndPoints(start, end);
+	  const distance = geodesic.surfaceDistance;
+	  
+	  // 获取视图像素宽度
+	  const pixelWidth = viewer.scene.canvas.clientWidth;
+	  
+	  // 计算比例尺分母
+	  const resolution = distance / pixelWidth;
+	  const scaleDenominator = (96 * resolution) / 0.0254;
+	  console.log(scaleDenominator);
+	  return scaleDenominator;
+	}
+	
+	function flyToPositions(positions, minLng, minLat, maxLng, maxLat) {
+		const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
+		const cartographic = Cesium.Cartographic.fromCartesian(center);
+		const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+		const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+		viewer.camera.flyTo({
+			destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+		});
+	}
+	
+	function drawOutline(positions, id) {
+		const outlinePrimitive = new Cesium.Primitive({
+		  geometryInstances: new Cesium.GeometryInstance({
+			id: id + '-Outline',
+			geometry:new Cesium.PolygonOutlineGeometry({
+			  polygonHierarchy: new Cesium.PolygonHierarchy(
+				Cesium.Cartesian3.fromDegreesArray(positions)
+			  ),
+			  width: 10.0,              
+			  height: 2 * primitives.size + 0.1,
+			  vertexFormat: Cesium.PolylineColorAppearance.VERTEX_FORMAT
+			}),
+			attributes: {
+				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+				  activeColor // 红色线条
+				)
+			  }
+		  }),
+		  releaseGeometryInstances: false,
+		  asynchronous: false,
+		  appearance: new Cesium.PolylineColorAppearance()
+		});
+		
+		viewer.scene.primitives.add(outlinePrimitive);		
+		
+		return outlinePrimitive;
+	}
+	
+	function activePrimitive(id) {
+		for (let [key, value] of primitives) {
+			if (id == key) {
+				value[0].show = true;
+				// 获取目标primitive的geometryInstances
+				const instances = value[1].geometryInstances;
+				const newInstance = new Cesium.GeometryInstance({
+					id: key + '-Outline',
+					geometry: instances.geometry,
+					attributes: {
+						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+							activeColor
+						)
+					}
+				});
+				viewer.scene.primitives.remove(value[1]);
+				value[1] = new Cesium.Primitive({
+					geometryInstances: newInstance,
+					releaseGeometryInstances: false,
+					asynchronous: false,
+					appearance: new Cesium.PolylineColorAppearance({
+						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+						translucent: true,
+						renderState: {
+							depthTest: { enabled: false },
+							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+						}
+					})
+				});
+				viewer.scene.primitives.add(value[1]);
+				value[1].show = true;
+			} else {
+				const instances = value[1].geometryInstances;
+				const newInstance = new Cesium.GeometryInstance({
+					id: key + '-Outline',
+					geometry: instances.geometry,
+					attributes: {
+						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+							inactiveColor
+						)
+					}
+				});
+				viewer.scene.primitives.remove(value[1]);
+				value[1].destroy();
+				value[1] = null;
+				value[1] = new Cesium.Primitive({
+					geometryInstances: newInstance,
+					releaseGeometryInstances: false,
+					asynchronous: false,
+					appearance: new Cesium.PolylineColorAppearance({
+						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+						translucent: true,
+						renderState: {
+							depthTest: { enabled: false },
+							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+						}
+					})
+				});
+				viewer.scene.primitives.add(value[1]);
+				value[1].show = true;
+			}
+		}
+	}
+	
+	function inactivePrimitive(id) {
+		let primitive = primitives.get(id);
+		primitive[0].show = false;
+		const instances = primitive[1].geometryInstances;
+		const newInstance = new Cesium.GeometryInstance({
+			id: id + '-Outline',
+			geometry: instances.geometry,
+			attributes: {
+				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+					inactiveColor
+				)
+			}
+		});
+		viewer.scene.primitives.remove(primitive[1]);
+		primitive[1].destroy();
+		primitive[1] = null;
+		primitive[1] = new Cesium.Primitive({
+			geometryInstances: newInstance,
+			releaseGeometryInstances: false,
+			asynchronous: false,
+			appearance: new Cesium.PolylineColorAppearance({
+				color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+				translucent: true,
+				renderState: {
+					depthTest: { enabled: false },
+					lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+				}
+			})
+		});
+		viewer.scene.primitives.add(primitive[1]);
+		primitive[1].show = true;
+	}
+	
+	function loadGeoJson(addr) {
+		Cesium.GeoJsonDataSource.load('./res/test.geojson', {
+			  stroke: inactiveColor,
+			  fill: Cesium.Color.WHITE.withAlpha(0.5)
+		  }).then(dataSource => {
+		  viewer.dataSources.add(dataSource);
+		  dataSource.entities.values.forEach(entity => {
+			if (entity.polygon) {
+			  const positions = entity.polygon.hierarchy.getValue().positions;
+			  /*entity.polyline = new Cesium.PolylineGraphics({
+				positions: positions,
+				width: 3,
+				material: activeColor.withAlpha(0.8),
+				clampToGround: true
+			  });*/
+			  //entity.polygon.fill = false; // 隐藏填充面
+			  
+			  let minLng, minLat, maxLng, maxLat = null;
+			  for (let position of positions) {
+				const cartographic = Cesium.Cartographic.fromCartesian(position);
+				const longitude = Cesium.Math.toDegrees(cartographic.longitude); // 经度
+				const latitude = Cesium.Math.toDegrees(cartographic.latitude);   // 纬度
+				if (!minLng || longitude < minLng) {
+					minLng = longitude;
+				}
+				if (!minLat || latitude < minLat) {
+					minLat = latitude;
+				}
+				if (!maxLng || longitude > maxLng) {
+					maxLng = longitude;
+				}
+				if (!maxLat || latitude > maxLat) {
+					maxLat = latitude;
+				}
+			  }
+			  
+			  const center = Cesium.BoundingSphere.fromPoints(positions).center;
+			  const cartographic = Cesium.Cartographic.fromCartesian(center);
+			  const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+			  const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+			  viewer.camera.flyTo({
+				destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+			  });
+			}
+		  });
+		}).catch(error => console.error('加载失败:', error));
+	}
+	
+	function loadImgResultUseEntity(imgAddr, leftUpPos, rightBottomPos, id) {
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		if (!entities.get(id)) {
+			const rectangle = viewer.entities.add({
+				name: 'Multiple Img Result',
+				rectangle: {
+					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+					material: new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: imgAddr,
+						transparent: true
+					}),
+					height: 0,
+					outline: true,
+					outlineColor: activeColor,
+					outlineWidth: 10,
+					clampToGround: false	
+				}
+			});
+			entities.set(id, {entity: rectangle, imgAddr: imgAddr});
+		} else {
+			for (let [key, value] of entities) {
+				if (key == id) {	
+					value.entity.rectangle.outlineColor = activeColor;
+					value.entity.rectangle.material = new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: value.imgAddr,
+						transparent: true
+					});
+				} else {
+					value.entity.rectangle.outlineColor = inactiveColor;
+				}
+			}
+		}
+		
+		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+	}
+	
+	function inactiveImgResultUseEntity(id) {
+		for (let [key, value] of entities) {
+			if (key == id) {
+				value.entity.rectangle.material = Cesium.Color.WHITE.withAlpha(0);
+				value.entity.rectangle.outlineColor = inactiveColor;
+			}
+		}
+	}
+	
+	function loadImgResult(imgAddr, leftUpPos, rightBottomPos, id) {
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		if (!primitives.get(id)) {				
+			const instances = [new Cesium.GeometryInstance({
+				id: id,
+				geometry: new Cesium.PolygonGeometry({
+					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
+					height: 10 * primitives.size,
+					perPositionHeight: false
+				}),
+				attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
+			})];
+			const imgPrimitive = new Cesium.Primitive({
+				id: id,
+				geometryInstances: instances,
+				releaseGeometryInstances: false,
+				asynchronous: false,
+				appearance: new Cesium.EllipsoidSurfaceAppearance({
+					material: new Cesium.Material({
+					  fabric: {
+						type: 'Image', // 指定图片类型材质:ml-citation{ref="5,6" data="citationList"}
+						uniforms: {
+						  image: imgAddr
+						}
+					  }
+					}),
+					flat: true
+				})
+			});
+			
+			viewer.scene.primitives.add(imgPrimitive);
+			
+			const outlinePrimitive = drawOutline(positions, id);
+			
+			
+			const collection = new Cesium.PrimitiveCollection();
+			collection.add(imgPrimitive);
+			collection.add(outlinePrimitive);
+
+			Promise.all([imgPrimitive.readyPromise, outlinePrimitive.readyPromise])
+			  .then(() => {
+				primitives.set(id, [imgPrimitive, outlinePrimitive]);
+				activePrimitive(id);	
+			  })
+			  .catch(error => {
+				console.error("加载失败:", error);
+			  });
+			const checkInterval = setInterval(() => {
+			  if (collection.ready) {
+				clearInterval(checkInterval);
+				primitives.set(id, [imgPrimitive, outlinePrimitive]);
+				activePrimitive(id);		
+				console.log('所有Primitive加载完成');
+			  }
+			}, 100);
+		} else {
+			activePrimitive(id);						
+		}	
+
+		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+	}
+	
+	function searchPosition(addr) {
+		return fetch(`./res/test.json`)
+			.then(response => response.json())
+			.then(data => {
+				let coordinates = data.geometry.coordinates[0][0];
+				let positions = [];
+				let minLng, minLat, maxLng, maxLat = null;
+				for (let coordinate of coordinates) {
+					positions.push(coordinate[0]);
+					positions.push(coordinate[1]);
+					if (!minLng || coordinate[0] < minLng) {
+						minLng = coordinate[0];
+					}
+					if (!minLat || coordinate[1] < minLat) {
+						minLat = coordinate[1];
+					}
+					if (!maxLng || coordinate[0] > maxLng) {
+						maxLng = coordinate[0];
+					}
+					if (!maxLat || coordinate[1] > maxLat) {
+						maxLat = coordinate[1];
+					}
+				}
+								
+				console.log(Cesium.Cartesian3.fromDegreesArray(positions));
+				/*const polygon = viewer.entities.add({
+                    polygon: {
+                        positions: Cesium.Cartesian3.fromDegreesArray(positions),
+						height: 0,
+                        perPositionHeight: false,
+                        material: activeColor.withAlpha(1),
+                        outline: true,
+                        outlineColor: inactiveColor,
+                        outlineWidth: 1
+                    }
+                });			
+
+				console.log(polygon);*/
+				
+				const instances = [new Cesium.GeometryInstance({
+				  geometry: new Cesium.PolygonGeometry({
+					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
+					height: 0,
+					perPositionHeight: false
+				  }),
+				  attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
+				})];
+				viewer.scene.primitives.add(new Cesium.Primitive({
+				  geometryInstances: instances,
+				  appearance: new Cesium.PerInstanceColorAppearance({
+					flat: true, // 关键！
+					translucent: true,
+					renderState: {
+					  lineWidth: 3, // 设置边框粗细
+					  lineColor: activeColor
+					}
+				  })
+				}));
+												
+				const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
+				const cartographic = Cesium.Cartographic.fromCartesian(center);
+				const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+				const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+				viewer.camera.flyTo({
+				  destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+				});
+			});
+	}
+	
+	function loadImage(url) {
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			img.src = url;
+			img.onload = () => resolve(img);
+			img.onerror = reject;
+		});
+	}
+
+	async function imageArrayToCanvasArray(imageUrls) {
+		return Promise.all(imageUrls.map(async (url) => {
+			const img = await loadImage(url);
+			const canvas = document.createElement('canvas');
+			canvas.width = img.width;
+			canvas.height = img.height;
+			const ctx = canvas.getContext('2d');
+			ctx.drawImage(img, 0, 0);
+			return canvas;
+		}));
+	}
+	
+	function updateImgFrame() {
+		currentIndex = (currentIndex + 1) % imageUrls.length;
+		return imageUrls[currentIndex].toDataURL();
+	}
+	
+	function loadMulImgResult(imgAddrArr, leftUpPos, rightBottomPos) {
+		cleanup();
+		
+		viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+				
+		let currentIndex = 0;
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+		
+		imageArrayToCanvasArray(imgAddrArr).then(imgList => {
+			const rectangle = viewer.entities.add({
+				name: 'Multiple Img Result',
+				rectangle: {
+					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+					material: new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: imgList[currentIndex].toDataURL(),
+						transparent: true
+					})
+				}
+			});
+			
+			if (minLng == -180 && maxLng == 180 && minLng == -90 && maxLng == -90) {
+				viewer.camera.flyTo({
+				  destination: Cesium.Cartesian3.fromDegrees(0, 0, 5000000)
+				});
+			} else {
+				flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+			}			
+			
+			let t = window.setInterval(() => {  
+			  currentIndex = (currentIndex + 1) % imgList.length;  
+			  rectangle.rectangle.material.image = imgList[currentIndex].toDataURL();
+			}, 800);
+			timer.push(t);
+		});
+	}
+	
+	const preloadTexture = (url) => {
+	  return new Promise((resolve) => {
+		const img = new Image();
+		img.onload = () => resolve(img);
+		img.src = url;
+	  });
+	};
+	
+	async function updateEntityMaterial(entity, newUrl) {
+	  const oldMaterial = entity.rectangle.material.getValue();
+	  Cesium.Resource.fetchImage(newUrl).then(image => {
+		entity.rectangle.material.image = image;
+	  });	  
+	}
+	
+	function loadMulImgResultNew(imgAddrArr, leftUpPos, rightBottomPos) {
+		cleanup();
+		
+		viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+				
+		let currentIndex = 0;
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+		
+		
+		const rectangle = viewer.entities.add({
+			name: 'Multiple Img Result',
+			rectangle: {
+				coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+				material: new Cesium.ImageMaterialProperty({
+					//添加回调
+					image: imgAddrArr[currentIndex],
+					transparent: true
+				})
+			}
+		});
+		
+		if (minLng == -180 && maxLng == 180 && minLng == -90 && maxLng == -90) {
+			viewer.camera.flyTo({
+			  destination: Cesium.Cartesian3.fromDegrees(0, 0, 5000000)
+			});
+		} else {
+			flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+		}	
+		
+		let t = window.setInterval(() => {
+			console.log(rectangle);
+			currentIndex = (currentIndex + 1) % imgAddrArr.length;  
+			updateEntityMaterial(rectangle, imgAddrArr[currentIndex]);
+		}, 1000);
+		timer.push(t);
+	}
+	
+	function loadMulImgResultWithEntityArr(imgAddrArr, leftUpPos, rightBottomPos) {
+		cleanup();
+		
+		viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+				
+		let currentIndex = 0;
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+						
+		let entityArr = new Array();
+		
+		for (let i in imgAddrArr) {
+			const rectangle = viewer.entities.add({
+				name: 'Multiple Img Result',
+				rectangle: {
+					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+					material: new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: imgAddrArr[currentIndex],
+						transparent: true
+					})
+				}
+			});
+			entityArr.push(rectangle);
+		}
+		
+		
+		if (minLng == -180 && maxLng == 180 && minLng == -90 && maxLng == -90) {
+			viewer.camera.flyTo({
+			  destination: Cesium.Cartesian3.fromDegrees(0, 0, 5000000)
+			});
+		} else {
+			flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+		}	
+		
+		let t = window.setInterval(() => {
+			currentIndex = (currentIndex + 1) % imgAddrArr.length;  
+			entityArr[currentIndex].zIndex = Math.floor(Math.random() * 1000);;
+		}, 1000);
+		timer.push(t);
+	}
+	
+	function loadMulImgResultWithVideo(videoPath, leftUpPos, rightBottomPos) {
+		cleanup();
+		
+		viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+				
+		let currentIndex = 0;
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+						
+		let entityArr = new Array();
+		
+		const videoEle = document.createElement('video');
+		videoEle.src = videoPath[0];
+		videoEle.muted = true;
+		videoEle.autoplay = true;
+		videoEle.loop = true;
+		videoEle.crossorigin = true;
+		videoEle.controls = true;
+		
+		const rectangle = viewer.entities.add({
+			name: 'Multiple Img Result',
+			rectangle: {
+				coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+				material: videoEle
+			}
+		});
+		
+		const synchronizer = new Cesium.VideoSynchronizer({
+		  clock: viewer.clock,
+		  element: videoEle
+		});
+		
+		
+		if (minLng == -180 && maxLng == 180 && minLng == -90 && maxLng == -90) {
+			viewer.camera.flyTo({
+			  destination: Cesium.Cartesian3.fromDegrees(0, 0, 5000000)
+			});
+		} else {
+			flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+		}	
+
+	}
+	
+	function markPosition(lon, lat, id, imgAddr) {
+		const center = lon + ',' + lat;
+		if (!billboards.get(center)) {		
+			const billboards = viewer.scene.primitives.add(
+			  new Cesium.BillboardCollection()
+			);
+			
+			const billboard = billboards.add({
+			  id: id,
+			  image: imgAddr,
+			  position: Cesium.Cartesian3.fromDegrees(lon, lat),
+			  width: 50,
+			  height: 50
+			});
+			
+			billboards.set(center, {billboards: billboards, imgAddrArr: [imgAddr]});		
+		} else {
+			let obj = billboards.get(center);
+			obj.imgAddrArr.push(imgAddr);
+		}
+		viewer.camera.flyTo({
+		  destination: Cesium.Cartesian3.fromDegrees(lon, lat, 5000000)
+		});
+	}
+	
+	
+	function inactivePosition(id) {
+		if (primitives.get(id)) {
+			primitives.get(id).show = false;
+		}
+	}
+	
+	function getZoomLevel(viewer) {
+	  const height = viewer.camera.positionCartographic.height;
+	  return Math.ceil(21 - Math.log(height / 1000) / Math.LN2) - 4; // 层级公式
+	}
+
+	function calculateScaleDenominatorFor3D(viewer) {
+	  let scale = null;
+	  let centerX = viewer._lastWidth / 2;
+	  let centerY = viewer._lastHeight / 2;
+	  let cartesian2 = new Cesium.Cartesian2(centerX, centerY);
+	  let ray = viewer.camera.getPickRay(cartesian2);
+	  let cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+	  if (cartesian) {
+		let boundingSphere = new Cesium.BoundingSphere();
+		boundingSphere.center = cartesian;
+		boundingSphere.radius = 0.1;
+		let resolution = viewer.scene.camera.getPixelSize(
+		  boundingSphere, 
+		  viewer.scene.context.drawingBufferWidth,
+		  viewer.scene.context.drawingBufferHeight
+		);
+		scale = (96 * resolution) / 0.0254;
+		return { scale: scale, resolution: resolution };
+	  } else {
+		return { scale: '-', resolution: '-' };
+	  }
+	}
+	
+	function calculateScaleDenominatorFor2D(viewer) {
+		const canvas = viewer.scene.canvas;
+		const center = new Cesium.Cartesian2(
+			canvas.width / 2, 
+			canvas.height / 2
+		);
+		const left = new Cesium.Cartesian2(0, center.y);
+		const right = new Cesium.Cartesian2(canvas.width, center.y);
+		
+		const geodesic = new Cesium.EllipsoidGeodesic();
+		const leftPos = viewer.scene.globe.pick(
+			viewer.camera.getPickRay(left), 
+			viewer.scene
+		);
+		const rightPos = viewer.scene.globe.pick(
+			viewer.camera.getPickRay(right), 
+			viewer.scene
+		);
+		
+		if(leftPos && rightPos) {
+			const leftCarto = Cesium.Cartographic.fromCartesian(leftPos);
+			const rightCarto = Cesium.Cartographic.fromCartesian(rightPos);
+			geodesic.setEndPoints(leftCarto, rightCarto);
+			return { scale: geodesic.surfaceDistance / canvas.width };
+		}
+		return { scale: '-' };
+	}
+
+	function getResolution(scale) {
+	  return scale * 0.0254 / 96; // 96为屏幕DPI, 0.0254英寸转米
+	}
+	
+  </script>
+</body>
+</html>

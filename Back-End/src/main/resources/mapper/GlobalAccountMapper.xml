@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+        namespace="cn.ac.sitp.infrared.datasource.mapper.GlobalAccountMapper">
+
+    <resultMap type="cn.ac.sitp.infrared.datasource.dao.AxrrAccount"
+               id="AxrrAccount">
+        <result property="userno" column="userno"/>
+        <collection property="clinicPermissions"
+                    ofType="cn.ac.sitp.infrared.datasource.dao.AxrrClinicPermission"
+                    select="selectClinic" column="{userno = userno}">
+        </collection>
+    </resultMap>
+
+    <select id="selectClinic" parameterType="java.util.HashMap"
+            resultMap="ClinicPermission">
+        select distinct o.organization_no,
+                        o.organization_id,
+                        o.organization_name,
+                        o.description,
+                        ugr.fk_user_no AS userno
+        from t_control_organization o
+                 JOIN
+             t_control_group_organization go ON o.organization_no =
+                                                go.fk_organizationno and o.valid = 'Y'
+                 JOIN t_control_group g ON g.id = go.fk_groupno
+                 JOIN t_control_user_group_role ugr on g.id = ugr.fk_group_no
+        where ugr.fk_user_no = ${userno}
+    </select>
+
+    <resultMap
+            type="cn.ac.sitp.infrared.datasource.dao.AxrrClinicPermission"
+            id="ClinicPermission">
+        <result property="organization_no" column="organization_no"/>
+        <collection property="permissionlist"
+                    ofType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission"
+                    select="selectPermission" column="{userno = userno, organization_no = organization_no}">
+        </collection>
+    </resultMap>
+
+    <select id="selectPermission" parameterType="java.util.HashMap"
+            resultType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission">
+        select distinct p.permission_no, p.permission_id
+        from t_control_permission p
+                 JOIN t_control_role_permission rp ON
+            rp.fk_permission_no = p.permission_no
+                 JOIN t_control_role r ON
+            rp.fk_role_no = r.role_no
+                 JOIN t_control_user_group_role ugr ON
+            ugr.fk_role_no = rp.fk_role_no
+                 JOIN t_control_group_organization go ON
+            ugr.fk_group_no = go.fk_groupno
+        where ugr.fk_user_no = ${userno}
+          and go.fk_organizationno = ${organization_no}
+    </select>
+
+    <select id="getRoleList" parameterType="java.util.Map"
+            resultType="cn.ac.sitp.infrared.datasource.dao.AxrrRole">
+        select *
+        from t_control_role
+    </select>
+
+    <select id="getPermissionList" parameterType="java.util.Map"
+            resultType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission">
+        select *
+        from t_control_permission
+    </select>
+
+    <select id="getRolePermissionList" parameterType="java.util.Map"
+            resultType="cn.ac.sitp.infrared.datasource.dao.AxrrRolePermission">
+        select *
+        from t_control_role_permission
+    </select>
+
+    <select id="getUserByName" parameterType="java.util.Map"
+            resultMap="AxrrAccount">
+        select *
+        from t_control_user
+        where username = #{username}
+          and type != 'Administrator'
+    </select>
+
+    <update id="lockAccount">
+        update t_control_user set lock_status = #{lock_status},
+        <if test='lock_status == "Y"'>
+            lock_time = now()
+        </if>
+        <if test='lock_status == "N"'>
+            failure_count = 0
+        </if>
+        <where>
+            userid = #{userid}
+        </where>
+    </update>
+
+    <update id="resetFailureCount">
+        update t_control_user
+        set failure_count = 0
+        where userid = #{userid}
+    </update>
+
+    <update id="increaseFailureCount">
+        update t_control_user
+        set failure_count = failure_count + 1
+        where userid = #{userid}
+    </update>
+
+    <update id="updatePassword" parameterType="cn.ac.sitp.infrared.datasource.dao.AxrrUser">
+        UPDATE t_control_user
+        SET password        = #{password},
+            expiration_time = now()
+        WHERE userid = #{userid}
+    </update>
+
+</mapper>

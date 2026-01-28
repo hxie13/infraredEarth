@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.ac.sitp.infrared.datasource.mapper.JobMapper">
+
+    <select id="selectJobList" resultMap="Job">
+        select job.id,
+        algorithm.id AS algorithm_id,
+        algorithm.name AS algorithm_name,
+        job.job_status as jobStatus,
+        dataset.id AS dataset_id,
+        job.insert_user_id as insertUserId,
+        job.insert_time as insertTime,
+        job.update_time as updateTime,
+        nc.id AS nc_id,
+        nc.nc_name AS nc_ncName,
+        nc.title AS nc_title,
+        nc.band_number AS nc_bandNumber,
+        nc.nc_path AS nc_ncPath,
+        nc.img_path AS nc_imgPath,
+        nc.start_time AS nc_startTime,
+        nc.end_time AS nc_endTime,
+        nc.geometry AS nc_ncGeometry,
+        china.name AS nc_name,
+        china.gb AS nc_gb,
+        china.geometry AS nc_geometry,
+        nc.satellite_type AS nc_satelliteType,
+        nc.resolution AS nc_resolution,
+        nc.img_type AS nc_imgType,
+        nc.process_type AS nc_processType
+        from job
+        LEFT JOIN algorithm ON job.fk_algorithm_id = algorithm.id
+        LEFT JOIN dataset ON job.fk_dataset_id = dataset.id
+        left JOIN nc_dataset ON dataset.id = nc_dataset.dataset_id
+        left JOIN nc ON nc_dataset.nc_id = nc.id
+        JOIN china ON ON ST_Contains(nc.geometry, china.geometry)
+        <where> dataset.del_flag = 0
+            <if test="user.userno != null">insert_user_id = #{user.userno}</if>
+        </where>
+        order by job.id
+        limit #{page_size} offset #{offset}
+    </select>
+
+    <resultMap id="Job" type="cn.ac.sitp.infrared.datasource.dao.Job">
+        <id property="id" column="id"/>
+        <result property="jobStatus" column="jobStatus"/>
+        <result property="insertUserId" column="insertUserId"/>
+        <result property="insertTime" column="insertTime"/>
+        <result property="updateTime" column="updateTime"/>
+        <association property="algorithm" javaType="cn.ac.sitp.infrared.datasource.dao.Algorithm">
+            <id property="id" column="algorithm_id"/>
+            <result property="name" column="algorithm_name"/>
+        </association>
+        <association property="dataSet" javaType="cn.ac.sitp.infrared.datasource.dao.DataSet">
+            <id property="id" column="dataset_id"/>
+        </association>
+        <collection property="ncList" ofType="cn.ac.sitp.infrared.datasource.dao.NC">
+            <id property="id" column="nc_id"/>
+            <result property="ncName" column="nc_ncName"/>
+            <result property="title" column="nc_title"/>
+            <result property="bandNumber" column="nc_bandNumber"/>
+            <result property="ncPath" column="nc_ncPath"/>
+            <result property="imgPath" column="nc_imgPath"/>
+            <result property="startTime" column="nc_startTime"/>
+            <result property="endTime" column="nc_endTime"/>
+            <result property="ncGeometry" column="nc_ncGeometry"/>
+            <result property="satelliteType" column="nc_satelliteType"/>
+            <result property="resolution" column="nc_resolution"/>
+            <result property="imgType" column="nc_imgType"/>
+            <result property="processType" column="nc_processType"/>
+            <association property="china" javaType="cn.ac.sitp.infrared.datasource.dao.China">
+                <result property="name" column="nc_name"/>
+                <result property="gb" column="nc_gb"/>
+                <result property="geometry" column="nc_geometry"/>
+            </association>
+        </collection>
+    </resultMap>
+
+    <select id="selectJobCount" resultType="int">
+        select count(1) from job
+        <where> 1=1
+            <if test="user.userno != null">insert_user_id = #{user.userno}</if>
+        </where>
+    </select>
+
+    <insert id="insertJob">
+        insert into job(fk_algorithm_id, fk_dataset_id, insert_user_id, insert_time, job_status)
+        values(#{algorithm_id}, #{dataset_id}, #{user.userno}, now(), 'PEN')
+    </insert>
+
+    <update id="updateJob">
+        update job set job_status = #{job_status}, update_time = now() where id = #{id}
+    </update>
+
+    <select id="selectAlgorithmList" resultType="cn.ac.sitp.infrared.datasource.dao.Algorithm">
+        select id, name from algorithm
+        limit #{page_size} offset #{offset}
+    </select>
+
+    <select id="selectAlgorithmCount" resultType="int">
+        select count(1) from algorithm
+    </select>
+
+
+</mapper>

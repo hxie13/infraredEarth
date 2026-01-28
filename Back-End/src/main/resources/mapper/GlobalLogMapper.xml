@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.ac.sitp.infrared.datasource.mapper.GlobalLogMapper">
+
+    <insert id="insertAuditLog" parameterType="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent" useGeneratedKeys="true" keyProperty="id">
+        insert into t_audit_event(event_name, dt_insert, dt_received, request_channel,
+                                  request_sys, dt_responsed, status, dt_update,
+                                  user_id, version, client_ip, description, display_name,
+                                  user_name, operation)
+        values (#{event_name}, now(), #{dt_received}, 'infrared', 'From infrared', #{dt_responsed}, #{status}, now(),
+                #{user_id}, 1, #{client_ip}, #{description, jdbcType=VARCHAR}, #{display_name,
+		jdbcType=VARCHAR}, #{user_name, jdbcType=VARCHAR}, #{operation})
+    </insert>
+
+    <select id="selectLogList" resultType="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent">
+        select *
+        from t_audit_event
+        where dt_insert between #{begin_date} and #{end_date}
+        limit #{page_size} offset #{offset}
+    </select>
+</mapper>
