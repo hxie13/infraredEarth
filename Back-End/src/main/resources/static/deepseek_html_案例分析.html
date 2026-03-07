@@ -19,6 +19,12 @@
 
     <!-- 引入axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+      const APP_ORIGIN = window.location.origin;
+      const APP_BASE_URL = `${APP_ORIGIN}/infrared`;
+      const buildApiUrl = (path) => `${APP_BASE_URL}${path}`;
+      const buildStoredFileUrl = (path) => `${APP_BASE_URL}/rest/file?path=${encodeURIComponent(path)}`;
+    </script>
     <!-- Tailwind配置 -->
     <script>
       tailwind.config = {
@@ -898,10 +904,11 @@
 }
  
 
-        }
+    }
     </style>
+    <link rel="stylesheet" href="./css/destine-theme.css">
   </head>
-  <body>
+  <body class="destine-theme">
     <div id="app">
       <nav class="navbar">
         <!-- Logo区域 -->
@@ -917,7 +924,7 @@
         </div>
         <!-- 主导航链接 -->
         <div class="nav-links">
-          <a href="index_v0704.html" class="nav-link">首页</a>
+          <a href="index.html" class="nav-link">首页</a>
           <a href="deepseek_html_数据搜索_v1.html" class="nav-link">数据检索</a>
           <a href="deepseek_html_模型分析_v1.html" class="nav-link ">模型分析</a>
           <a href="deepseek_html_案例分析.html" class="nav-link active">案例分析</a>
@@ -1353,7 +1360,7 @@
                     if (!clickedRow || clickedRow.parentElement.tagName === 'THEAD') return;
                     
                     const xhr = new XMLHttpRequest()
-                    let url = 'http://localhost:8080/infrared/rest/naturaldisaster/file/' + id
+                    let url = buildApiUrl('/rest/naturaldisaster/file/' + id)
                     xhr.open('GET', url);
                     xhr.onload = () => {
                       if (xhr.status === 200) {
@@ -1420,7 +1427,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
 			img.alt= data[i].timeStr
 			img.id= data[i].id
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
@@ -1462,7 +1469,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1501,7 +1508,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1541,7 +1548,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1580,7 +1587,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1619,7 +1626,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1659,7 +1666,7 @@
         // 预加载所有图片
         for (let i = 0; i < data.length; i++) {
             const img = new Image();
-			img.src = 'http://localhost:8080/infrared/files/' + data[i].imgPath
+			img.src = buildStoredFileUrl(data[i].imgPath)
            // img.src = `frames/frame_${i.toString().padStart(4, '0')}.png`; // 路径格式如：frame_0000.png
             images.push(img);
         }
@@ -1718,7 +1725,7 @@
                     if (imgAddr[i].imgPath) {
                       var path = imgAddr[i].imgPath
                       const xhr = new XMLHttpRequest()
-                      let url = 'http://localhost:8080/infrared/files/' + path
+                      let url = buildStoredFileUrl(path)
                       arrList.push(url)
                     }
                   }
@@ -1790,7 +1797,7 @@
                   const queryString = Object.keys(params).map(key =>
                     `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
                   // 4. 拼接完整 URL
-                  const url = `http://localhost:8080/infrared/rest/naturaldisaster/file/1?${queryString}`;
+                  const url = buildApiUrl('/rest/naturaldisaster/file/1?' + queryString);
                   xhr.open('GET', url);
                   xhr.onload = () => {
                     if (xhr.status === 200) {
@@ -1843,7 +1850,7 @@
                   const queryString = Object.keys(params).map(key =>
                     `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
                   // 4. 拼接完整 URL
-                  const url = `http://localhost:8080/infrared/rest/naturaldisaster/file/1?${queryString}`;
+                  const url = buildApiUrl('/rest/naturaldisaster/file/1?' + queryString);
                   xhr.open('GET', url);
                   xhr.onload = () => {
                     if (xhr.status === 200) {
@@ -1867,13 +1874,24 @@
                 }, false); */
 				
 				  const canvasAll = document.getElementById('canvasAll');
+                  function setToggleGroupState(activeId, buttonIds) {
+                    buttonIds.forEach((buttonId) => {
+                      const button = document.getElementById(buttonId);
+                      if (!button) {
+                        return;
+                      }
+                      const isActive = buttonId === activeId;
+                      button.classList.toggle('is-active', isActive);
+                      button.classList.toggle('is-idle', !isActive);
+                    });
+                  }
+                  setToggleGroupState('localPath', ['flightPath', 'localPath']);
                  //3d飞行路径
 			      document.getElementById('flightPath').addEventListener('click', function() {
 				  //隐藏animationCanvas
 				  canvasAll.style.display = 'none'
 				  clearIntervalAll()
-                  document.getElementById('flightPath').style.background = "#0081ff"
-                  document.getElementById('localPath').style.background = "#1188c1"
+                  setToggleGroupState('flightPath', ['flightPath', 'localPath'])
 				  viewer.clock.shouldAnimate = true;
 				  if(pineAll.length == 0){
                   getPonit(0)//预测
@@ -1886,8 +1904,7 @@
 				  //暂停时间线
 				  viewer.clock.shouldAnimate = false;
 				  canvasAll.style.display = 'block'
-                  document.getElementById('localPath').style.background = "#0081ff"
-                  document.getElementById('flightPath').style.background = "#1188c1"
+                  setToggleGroupState('localPath', ['flightPath', 'localPath'])
 				  getPonit(5)
 				  getPonit(2)
 				  getPonit(4)
@@ -2187,7 +2204,7 @@
                     if (imgAddr[i].imgPath) {
                       var path = imgAddr[i].imgPath
                       const xhr = new XMLHttpRequest()
-                      let url = 'http://localhost:8080/infrared/files/' + path
+                      let url = buildStoredFileUrl(path)
                       arrList.push(url)
                     }
                   }
@@ -2448,7 +2465,7 @@
                   const queryString = Object.keys(params).map(key =>
                     `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
                   // 4. 拼接完整 URL
-                  const url = `http://localhost:8080/infrared/rest/naturaldisaster/file/1?${queryString}`;
+                  const url = buildApiUrl('/rest/naturaldisaster/file/1?' + queryString);
                   xhr.open('GET', url);
                   xhr.onload = () => {
                     if (xhr.status === 200) {
@@ -3051,11 +3068,15 @@
 				   if(canvas !== undefined && canvas.style.display == 'block'){
 				     canvas.style.display = 'none'
 					 document.getElementById(btnId).classList.remove('btnActive');
+					 document.getElementById(btnId).classList.remove('is-active');
 				     document.getElementById(btnId).classList.add('btnTop');
+					 document.getElementById(btnId).classList.add('is-idle');
 				   }else if(canvas.style.display == 'none'){
 				     canvas.style.display = 'block'
 					 document.getElementById(btnId).classList.remove('btnTop');
+					 document.getElementById(btnId).classList.remove('is-idle');
 				     document.getElementById(btnId).classList.add('btnActive');
+					 document.getElementById(btnId).classList.add('is-active');
 				   }
 				  this.$forceUpdate()
 		         },
@@ -3089,7 +3110,7 @@
                   const queryString = Object.keys(params).map(key =>
                     `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`).join('&');
                   // 4. 拼接完整 URL
-                  const url = `http://localhost:8080/infrared/rest/naturaldisaster/file/1?${queryString}`;
+                  const url = buildApiUrl('/rest/naturaldisaster/file/1?' + queryString);
                   xhr.open('GET', url);
                   xhr.onload = () => {
                     if (xhr.status === 200) {
@@ -3157,7 +3178,7 @@
                 showUserList2() {
                   //使用axios自定义配置，访问指定地址
                   const request = axios.create({
-                    baseURL: 'http://localhost:8080'
+                    baseURL: window.location.origin
                   })
                   const data2 = {};
                   request.post('/infrared/rest/naturaldisaster/list', data2).then((response) => {
@@ -3169,7 +3190,7 @@
 				
                 naturaldisatserType() {
                   const request = axios.create({
-                    baseURL: 'http://localhost:8080'
+                    baseURL: window.location.origin
                   })
                   const data2 = {};
                   request.post('/infrared/rest/naturaldisaster/getType', data2).then((response) => {

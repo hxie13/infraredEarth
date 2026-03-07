@@ -17,7 +17,15 @@
     <select id="selectLogList" resultType="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent">
         select *
         from t_audit_event
-        where dt_insert between #{begin_date} and #{end_date}
+        <where>
+            <if test="begin_date != null">
+                dt_insert &gt;= #{begin_date}
+            </if>
+            <if test="end_date != null">
+                and dt_insert &lt;= #{end_date}
+            </if>
+        </where>
+        order by dt_insert desc
         limit #{page_size} offset #{offset}
     </select>
 </mapper>

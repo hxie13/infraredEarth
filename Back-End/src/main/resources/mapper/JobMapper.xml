@@ -14,17 +14,17 @@
         job.insert_time as insertTime,
         job.update_time as updateTime,
         nc.id AS nc_id,
-        nc.nc_name AS nc_ncName,
+        nc.name AS nc_ncName,
         nc.title AS nc_title,
         nc.band_number AS nc_bandNumber,
         nc.nc_path AS nc_ncPath,
         nc.img_path AS nc_imgPath,
         nc.start_time AS nc_startTime,
         nc.end_time AS nc_endTime,
-        nc.geometry AS nc_ncGeometry,
+        ST_AsGeoJSON(nc.geometry) AS nc_ncGeometry,
         china.name AS nc_name,
         china.gb AS nc_gb,
-        china.geometry AS nc_geometry,
+        ST_AsGeoJSON(china.geometry) AS nc_geometry,
         nc.satellite_type AS nc_satelliteType,
         nc.resolution AS nc_resolution,
         nc.img_type AS nc_imgType,
@@ -34,9 +34,9 @@
         LEFT JOIN dataset ON job.fk_dataset_id = dataset.id
         left JOIN nc_dataset ON dataset.id = nc_dataset.dataset_id
         left JOIN nc ON nc_dataset.nc_id = nc.id
-        JOIN china ON ON ST_Contains(nc.geometry, china.geometry)
-        <where> dataset.del_flag = 0
-            <if test="user.userno != null">insert_user_id = #{user.userno}</if>
+        JOIN china ON ST_Contains(nc.geometry, china.geometry)
+        <where> dataset.del_flag = false
+            <if test="user != null and user.userno != null">and job.insert_user_id = #{user.userno}</if>
         </where>
         order by job.id
         limit #{page_size} offset #{offset}
@@ -78,9 +78,10 @@
     </resultMap>
 
     <select id="selectJobCount" resultType="int">
-        select count(1) from job
+        select count(1)
+        from job
         <where> 1=1
-            <if test="user.userno != null">insert_user_id = #{user.userno}</if>
+            <if test="user != null and user.userno != null">and job.insert_user_id = #{user.userno}</if>
         </where>
     </select>
 

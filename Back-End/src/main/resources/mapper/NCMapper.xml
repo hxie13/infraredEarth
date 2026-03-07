@@ -5,26 +5,47 @@
 <mapper namespace="cn.ac.sitp.infrared.datasource.mapper.NCMapper">
 
     <select id="selectNCList" resultMap="NC">
-        select nc.id, nc.name as ncName, nc.title, nc.band_number as bandNumber, nc.nc_path as ncPath, nc.img_path as imgPath,
-        nc.satellite_type as satelliteType, nc.resolution, nc.img_type as imgType, nc.process_type as processType,
-        nc.start_time as startTime, nc.end_time as endTime, ST_ASGeoJSON(nc.geometry) as ncGeometry, china.name, china.gb,
+        select nc_page.id, nc_page.name as ncName, nc_page.title, nc_page.band_number as bandNumber,
+        nc_page.nc_path as ncPath, nc_page.img_path as imgPath,
+        nc_page.satellite_type as satelliteType, nc_page.resolution, nc_page.img_type as imgType,
+        nc_page.process_type as processType, nc_page.start_time as startTime, nc_page.end_time as endTime,
+        ST_AsGeoJSON(nc_page.geometry) as ncGeometry, china.name, china.gb,
         ST_AsGeoJSON(china.geometry) as geometry
-        from nc
-        join china ON ST_Contains(nc.geometry, china.geometry)
-        <where> 1=1
-            <if test="name != null">and nc_name like '%' || #{name} || '%'</if>
-            <if test="title != null">and nc.title like '%' || #{title} || '%'</if>
-            <if test="band_number != null">and nc.band_number = #{band_number}</if>
-            <if test="region_name != null">and china.name like '%' || #{region_name} || '%'</if>
-            <if test="satellite_type != null">and nc.satellite_type = #{satellite_type}</if>
-            <if test="resolution != null">and nc.resolution = #{resolution}</if>
-            <if test="img_type != null">and nc.img_type = #{img_type}</if>
-            <if test="process_type != null">and nc.process_type = #{process_type}</if>
-            <if test="begin_date != null">and nc.start_time &gt;= #{begin_date}</if>
-            <if test="end_date != null">and nc.end_time &lt;= #{end_date}</if>
-        </where>
-        order by nc.id
-        limit #{page_size} offset #{offset}
+        from (
+            select nc.id, nc.name, nc.title, nc.band_number, nc.nc_path, nc.img_path,
+            nc.satellite_type, nc.resolution, nc.img_type, nc.process_type,
+            nc.start_time, nc.end_time, nc.geometry
+            from nc
+            <where> 1=1
+                <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%'</if>
+                <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%'</if>
+                <if test="band_number != null">and nc.band_number = #{band_number}</if>
+                <if test="region_name != null and region_name != ''">
+                    and exists (
+                        select 1
+                        from china c_filter
+                        where ST_Contains(nc.geometry, c_filter.geometry)
+                          and c_filter.name like '%' || #{region_name} || '%'
+                    )
+                </if>
+                <if test="satellite_type != null and satellite_type != ''">and nc.satellite_type = #{satellite_type}</if>
+                <if test="resolution != null and resolution != ''">and nc.resolution = #{resolution}</if>
+                <if test="img_type != null and img_type != ''">and nc.img_type = #{img_type}</if>
+                <if test="process_type != null and process_type != ''">and nc.process_type = #{process_type}</if>
+                <if test="begin_date != null">and nc.start_time &gt;= #{begin_date}</if>
+                <if test="end_date != null">and nc.end_time &lt;= #{end_date}</if>
+            </where>
+            order by nc.id
+            limit #{page_size} offset #{offset}
+        ) nc_page
+        left join lateral (
+            select c.name, c.gb, c.geometry
+            from china c
+            where ST_Contains(nc_page.geometry, c.geometry)
+            order by c.name
+            limit 1
+        ) china on true
+        order by nc_page.id
     </select>
 
     <resultMap id="NC" type="cn.ac.sitp.infrared.datasource.dao.NC">
@@ -49,7 +70,7 @@
     </resultMap>
 
     <select id="insertDataSet" resultType="java.lang.Long">
-        insert into data_set(insert_user_id, insert_time, del_flag, update_time) values(#{user_no}, now(), 0, now())
+        insert into dataset(insert_user_id, insert_time, del_flag, update_time) values(#{user_no}, now(), false, now())
         returning id
     </select>
 
@@ -63,18 +84,24 @@
     <select id="selectNCCount" resultType="int">
         select count(*)
         from nc
-        join china ON ST_Contains(nc.geometry, china.geometry)
         <where> 1=1
-            <if test="name != null">and nc_name like '%' || #{name} || '%'</if>
-            <if test="title != null">and nc.title like '%' || #{title} || '%'</if>
+            <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%'</if>
+            <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%'</if>
             <if test="band_number != null">and nc.band_number = #{band_number}</if>
-            <if test="region_name != null">and china.name like '%' || #{region_name} || '%'</if>
-            <if test="satellite_type != null">and nc.satellite_type = #{satellite_type}</if>
-            <if test="resolution != null">and nc.resolution = #{resolution}</if>
-            <if test="img_type != null">and nc.img_type = #{img_type}</if>
-            <if test="process_type != null">and nc.process_type = #{process_type}</if>
-            <if test="begin_date != null">and nc.start_time &gt; #{begin_date}</if>
-            <if test="end_date != null">and nc.end_time &lt; #{end_date}</if>
+            <if test="region_name != null and region_name != ''">
+                and exists (
+                    select 1
+                    from china c_filter
+                    where ST_Contains(nc.geometry, c_filter.geometry)
+                      and c_filter.name like '%' || #{region_name} || '%'
+                )
+            </if>
+            <if test="satellite_type != null and satellite_type != ''">and nc.satellite_type = #{satellite_type}</if>
+            <if test="resolution != null and resolution != ''">and nc.resolution = #{resolution}</if>
+            <if test="img_type != null and img_type != ''">and nc.img_type = #{img_type}</if>
+            <if test="process_type != null and process_type != ''">and nc.process_type = #{process_type}</if>
+            <if test="begin_date != null">and nc.start_time &gt;= #{begin_date}</if>
+            <if test="end_date != null">and nc.end_time &lt;= #{end_date}</if>
         </where>
     </select>
 </mapper>

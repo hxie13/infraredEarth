@@ -1,775 +1,484 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <!-- Include the CesiumJS JavaScript and CSS files -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>红外地球 | 多尺度红外灾害智能门户</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-  <!--<script src="https://api.map.baidu.com/getscript?v=3.0&ak=ZKLyEoFl9EC7zHeveDyvVUkbq7eI5Vs0"></script>-->
+  <link rel="stylesheet" href="./css/destine-theme.css">
+  <link rel="stylesheet" href="./css/home-portal.css">
 </head>
-<body>
-  <div id="cesiumContainer"></div>
-  <div id="geoInfoPanel" style="width: 600px; position:absolute; bottom:53px; right:10px; background:rgba(255,255,255,0.3); padding:5px; color:white; border-radius:3px;">
-	  <div>
-		地图级别: <span id="zoomLevel">--</span> 
-		比例尺: 1:<span id="mapScale">--</span>
-		坐标: <span id="coordinate">--, --</span>
-	  </div>
+<body class="destine-theme home-portal">
+  <header class="platform-header">
+    <a class="platform-brand" href="#home" aria-label="返回首页">
+      <span class="brand-flag">IE</span>
+      <span class="brand-copy">
+        <strong>Infrared Earth</strong>
+        <small>多尺度红外灾害分析与服务平台</small>
+      </span>
+    </a>
+
+    <button id="mobileMenuToggle" class="mobile-nav-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="platform-nav" aria-label="首页主导航">
+      <a class="js-nav-link is-active" href="#home">首页</a>
+      <a class="js-nav-link" href="#modules">业务模块</a>
+      <a class="js-nav-link" href="#about-platform">关于平台</a>
+      <a class="js-nav-link" href="#workflow">工作流程</a>
+      <a class="js-nav-link" href="#scenarios">经典案例</a>
+      <a class="js-nav-link" href="#contact">联系我们</a>
+    </nav>
+
+    <div class="platform-actions">
+      <a class="ghost-btn" href="deepseek_html_数据搜索_v1.html">影像检索</a>
+      <a class="accent-btn" href="deepseek_html_模型分析_v1.html">模型处理</a>
+    </div>
+  </header>
+
+  <div id="mobileMenu" class="mobile-menu" hidden>
+    <div class="mobile-menu-inner glass-card">
+      <a class="js-nav-link is-active" href="#home">首页</a>
+      <a class="js-nav-link" href="#modules">业务模块</a>
+      <a class="js-nav-link" href="#about-platform">关于平台</a>
+      <a class="js-nav-link" href="#workflow">工作流程</a>
+      <a class="js-nav-link" href="#scenarios">经典案例</a>
+      <a class="js-nav-link" href="#contact">联系我们</a>
+      <div class="mobile-quick-links">
+        <a class="ghost-btn" href="deepseek_html_数据搜索_v1.html">数据搜索页</a>
+        <a class="ghost-btn" href="deepseek_html_模型分析_v1.html">模型处理页</a>
+        <a class="ghost-btn" href="deepseek_html_案例分析.html">案例展示页</a>
+      </div>
+    </div>
   </div>
-  <script type="module">
-    // Your access token can be found at: https://ion.cesium.com/tokens.
-    // This is the default access token from your ion account
-	
-	import { draw } from './js/draw.js' // 我的ts文件
-	
-	class EarthRotator {
-		constructor(viewer) {
-			this.viewer = viewer;
-			this.rotateActive = false;
-			this.delta = 0.001; // 每帧旋转角度
-		}
 
-		start() {
-			this.rotateActive = true;
-			this.viewer.scene.postUpdate.addEventListener(this.rotate);
-		}
+  <main class="portal-shell">
+    <section id="home" class="hero-grid">
+      <aside class="hero-copy glass-card">
+        <div>
+          <div class="eyebrow">Infrared Earth Portal / 中文化门户首页</div>
+          <div class="portal-mark" aria-hidden="true"></div>
+          <h1>面向灾害监测、模型处理与案例研判的多尺度智能门户</h1>
+          <p>
+            红外地球聚焦红外极端事件演化与分析，借鉴 Destination Earth 的门户表达方式，
+            同时以中文业务语境重构入口、工作流与案例叙事，形成“看态势、找数据、跑模型、做研判”的统一首页。
+          </p>
+          <div class="hero-actions">
+            <a class="accent-btn" href="deepseek_html_数据搜索_v1.html">进入影像检索</a>
+            <a class="ghost-btn" href="deepseek_html_模型分析_v1.html">进入模型处理</a>
+            <a class="ghost-btn" href="deepseek_html_案例分析.html">查看案例展示</a>
+          </div>
+          <div class="hero-tags" aria-label="核心能力标签">
+            <span>影像检索</span>
+            <span>模型处理</span>
+            <span>案例展示</span>
+            <span>三维地球</span>
+            <span>风险研判</span>
+          </div>
+        </div>
 
-		stop() {
-			this.rotateActive = false;
-			this.viewer.scene.postUpdate.removeEventListener(this.rotate);
-		}
+        <div class="hero-metric-row">
+          <article>
+            <strong>3</strong>
+            <span>核心业务链路</span>
+          </article>
+          <article>
+            <strong>6</strong>
+            <span>门户内容区块</span>
+          </article>
+          <article>
+            <strong>72H</strong>
+            <span>态势视窗演示周期</span>
+          </article>
+        </div>
+      </aside>
 
-		rotate = () => {
-			if (this.rotateActive) {
-				viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
-			}
-		};
-	}
-	
-	const primitives = new Map();
-	const entities = new Map();
-	const billboards = new Map();
-	const timer = new Array();
-	let currentIndex = 0;
-	const imgArr = new Array();
-	
-	const inactiveColor = Cesium.Color.fromBytes(51, 153, 204);
-	const activeColor = Cesium.Color.RED;
-	
-	Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZjU4YmI5NS0xOTkxLTQyMWItOWE2ZS1hZGNhYTU1YzRlNTQiLCJpZCI6MzE4MTAyLCJpYXQiOjE3NTE1MjkwMDR9.8WjfY2pPzxw6kVxpSk6a0PHycFOUUcb4jyNh9j8lpW4';
-	
-	const viewer = new Cesium.Viewer("cesiumContainer", {
-		geocoder: false, // 地理编码搜索框
-        homeButton: false, // 主页按钮
-		baseLayerPicker: false, // 底图选择器,
-		fullscreenButton: false,
-	});
-	
-	const gdBasicLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
-	  url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
-	  style: 'default',
-	  format: 'image/png',
-	  tileMatrixSetID: 'GoogleMapsCompatible',
-	}));
+      <section class="hero-stage" aria-label="红外地球态势窗口">
+        <div class="stage-toolbar glass-card">
+          <div class="toolbar-copy">
+            <strong>红外地球态势窗口</strong>
+            <span>China-centered risk intelligence hub</span>
+          </div>
+          <div class="toolbar-track">
+            <span>实时</span>
+            <div class="track" aria-hidden="true">
+              <div class="track-fill"></div>
+              <div class="track-dot"></div>
+            </div>
+            <span>72H</span>
+          </div>
+          <div class="toolbar-buttons">
+            <button class="toolbar-btn is-active" id="focusGlobal" type="button">全球视角</button>
+            <button class="toolbar-btn" id="focusAsia" type="button">亚洲窗口</button>
+            <button class="toolbar-btn" id="resumeRotation" type="button">恢复旋转</button>
+          </div>
+        </div>
 
-	// 加载高德地图影像地理标签
-	const gdLabelLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
-	  url: 'http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
-	  style: 'default',
-	  format: 'image/jpeg',
-	  tileMatrixSetID: 'GoogleMapsCompatible',
-	}));
+        <div class="cesium-stage">
+          <div id="cesiumContainer"></div>
+          <div class="stage-note left">
+            <strong>入口更聚焦</strong>
+            <span>首页不再只是视觉展示页，而是以导航、模块和案例组织为中心的工作入口。</span>
+          </div>
+          <div class="stage-note right">
+            <strong>信息更统一</strong>
+            <span>按钮、卡片、文案与态势控件全部统一到同一套配色与层级规则下。</span>
+          </div>
+          <div class="geo-panel">
+            <div><span>缩放级别</span><strong id="zoomLevel">--</strong></div>
+            <div><span>比例尺</span><strong id="mapScale">--</strong></div>
+            <div><span>当前坐标</span><strong id="coordinate">--, --</strong></div>
+          </div>
+        </div>
+      </section>
 
-	//viewer.imageryLayers.add(gdBasicLayer);
-	//viewer.imageryLayers.add(gdLabelLayer);
-	
-	const tdtKey = 'a090fdbe1ebf350ab3eba3adef7d3417';
-	// 加载天地图影像底图
-	const tdtBasicLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
-	  url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
-	  layer: "tdtBasicLayer",
-	  style: "default",
-	  format: "image/jpeg",
-	  tileMatrixSetID: "GoogleMapsCompatible",
-	}));
+      <aside class="hero-side">
+        <article class="metric-card glass-card">
+          <div>
+            <div class="metric-value">4</div>
+            <p>统一串联首页、影像检索页、模型处理页和案例展示页，形成一致的门户入口。</p>
+          </div>
+          <a href="#modules">查看模块</a>
+        </article>
+        <article class="metric-card glass-card">
+          <div>
+            <div class="metric-value">STEP</div>
+            <p>将旧主页的介绍、工作流和案例内容迁移进新门面，避免视觉升级后信息缺失。</p>
+          </div>
+          <a href="#workflow">查看流程</a>
+        </article>
+        <article class="metric-card glass-card">
+          <div>
+            <div class="metric-value">CN</div>
+            <p>保留国际化门户气质，但整体内容、排版和交互都转译成面向国内用户的业务表达。</p>
+          </div>
+          <a href="#about-platform">了解平台</a>
+        </article>
+      </aside>
+    </section>
 
-	// 加载天地图影像地理标签
-	const tdtLabelLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
-	  url: `http://t0.tianditu.gov.cn/cia_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cia&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
-	  layer: "tdtAnnoLayer",
-	  style: "default",
-	  format: "image/jpeg",
-	  tileMatrixSetID: "GoogleMapsCompatible",
-	}));
+    <section id="modules" class="section-block glass-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Portal Modules</span>
+          <h2>业务模块</h2>
+        </div>
+        <p>以任务为中心组织首页入口，让数据搜索、模型处理和案例研判形成顺畅衔接，而不是分散跳转。</p>
+      </div>
 
-	viewer.imageryLayers.add(tdtBasicLayer);
-	viewer.imageryLayers.add(tdtLabelLayer);
-	
-	viewer.cesiumWidget.creditContainer.style.display = "none";
-	
-	const layers = viewer.scene.imageryLayers;
-	
-	// 抗锯齿
-    viewer.scene.fxaa = true;
-    viewer.scene.postProcessStages.fxaa.enabled=false;
-    // 水雾特效
-    viewer.scene.globe.showGroundAtmosphere = true;
-    // 设置最大俯仰角，[-90,0]区间内，默认为-30，单位弧度
-    viewer.scene.screenSpaceCameraController.constrainedPitch = Cesium.Math.toRadians(-20);
-    viewer.scene.screenSpaceCameraController.autoResetHeadingPitch = false;
-    viewer.scene.screenSpaceCameraController.inertiaZoom = 0.5;
-    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
-    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 20000000;
-	
-	viewer.scene.globe.depthTestAgainstTerrain = false;
+      <div class="module-grid">
+        <a class="module-card glass-card" href="deepseek_html_数据搜索_v1.html">
+          <span class="module-kicker">Data Search</span>
+          <h3>影像与专题数据搜索</h3>
+          <p>面向影像检索、极端灾害数据筛选与产品定位，提供从数据发现到快速预览的统一入口。</p>
+          <span class="module-link">进入页面</span>
+        </a>
+        <a class="module-card glass-card" href="deepseek_html_模型分析_v1.html">
+          <span class="module-kicker">Model Workflow</span>
+          <h3>模型处理与产品分析</h3>
+          <p>将模型运行、结果分析、工作区组织和产品处理编排进同一条操作链路。</p>
+          <span class="module-link">进入页面</span>
+        </a>
+        <a class="module-card glass-card" href="deepseek_html_案例分析.html">
+          <span class="module-kicker">Case Intelligence</span>
+          <h3>经典案例展示与研判</h3>
+          <p>把典型事件串联成完整案例视图，强化从“数据”到“解读”的闭环表达。</p>
+          <span class="module-link">进入页面</span>
+        </a>
+      </div>
+    </section>
 
+    <section id="about-platform" class="section-block glass-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">About Infrared Earth</span>
+          <h2>关于红外地球平台</h2>
+        </div>
+        <p>补齐旧主页的核心平台介绍，并用更清晰的两栏叙事方式融入新的门户视觉语言。</p>
+      </div>
 
-    // Fly the camera to San Francisco at the given longitude, latitude, and height.
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(103.84, 31.15, 9500000),
-      /*orientation: {
-        heading: Cesium.Math.toRadians(0.0),
-        pitch: Cesium.Math.toRadians(-15.0),
-      }*/
-    });	
-	
-	
-	// 使用示例
-	//const rotator = new EarthRotator(viewer);
-	//rotator.start();
+      <div class="about-grid">
+        <div class="about-copy">
+          <p class="lead-text">
+            红外地球是一个专注于红外极端事件演化与分析的平台，通过尺度分离与重整化群理论，
+            将数字孪生地球从当前的离散重构发展为无尺度重构。
+          </p>
+          <div class="paper-card highlight-card">
+            <p>
+              变革观测范式，致力于洞察地球极端灾害本质。构建双向多尺度耦合框架，刻画复杂系统级联效应。
+              以偏微分方程约束的高性能计算、新型计算架构打造全球领先的灾害风险模拟器。
+            </p>
+          </div>
+          <div class="about-pillars">
+            <article class="glass-subcard">
+              <strong>多尺度理论</strong>
+              <span>以尺度分离与重整化思路统筹灾害演化建模。</span>
+            </article>
+            <article class="glass-subcard">
+              <strong>高性能计算</strong>
+              <span>面向复杂系统级联效应的约束计算与产品生成。</span>
+            </article>
+            <article class="glass-subcard">
+              <strong>业务闭环</strong>
+              <span>从数据搜索到模型处理，再到案例研判的一体化门户入口。</span>
+            </article>
+          </div>
+        </div>
 
-	// 点击停止
-	viewer.screenSpaceEventHandler.setInputAction(() => {
-		if (rotator) {
-			rotator.stop();
-		}
-	}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-	
-	const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-	handler.setInputAction(movement => {
-	  const cartesian = viewer.scene.globe.pick(
-		viewer.camera.getPickRay(movement.endPosition),
-		viewer.scene
-	  );
-	  if (!cartesian) {
-		return;
-	  }
-	  const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
-	  const lon = Cesium.Math.toDegrees(cartographic.longitude);
-	  const lat = Cesium.Math.toDegrees(cartographic.latitude);
-	  document.getElementById('coordinate').textContent = lon + ',' + lat;
-	}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-	
-	viewer.scene.postRender.addEventListener(() => {
-	  // 更新层级
-	  document.getElementById('zoomLevel').textContent = getZoomLevel(viewer);
-	  
-	  // 更新比例尺
-	  const scale = calculateScaleDenominator(viewer);
-	  document.getElementById('mapScale').textContent = Math.round(scale.scale);
-	  
-	  // 坐标通过独立事件更新（避免频繁计算）
-	});
+        <figure class="about-media paper-card">
+          <div class="media-frame">
+            <video
+              id="platformVideo"
+              class="platform-video"
+              src="img/KW_GGL_EFM_Hero_uDDpA0T.mp4"
+              poster="img/数据中心.png"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            ></video>
+          </div>
+          <figcaption>
+            <strong>平台概念演示</strong>
+            <span id="videoStatus">视频将自动循环播放；若浏览器阻止自动播放，将显示静态占位图。</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
 
-	/*viewer.resolutionScale = 0.7;
-	viewer.scene.fxaa = false;
-	viewer.scene.postProcessStages.fxaa.enabled = false;*/
-	
-	window.addEventListener('message', (event) => {
-		// 验证来源以确保安全
-		//if (event.origin !== 'http://192.168.0.36') 
-		//	return;
-		console.log('Received data:', event.data);
-		if (event.data.operation == 'startDrawing') {
-			drawer.cleanup();
-			drawer.startDrawing();
-		} else if (event.data.operation == 'drawPolygon') {
-			draw(viewer, 'Rectangle', { continueDraw: false, removeLast: false }, entity => {
-			  console.log('👉 ~ 多边形实体:', entity)
-			});
-		} else if (event.data.operation == 'cleanup') {
-			cleanup();
-		} else if (event.data.operation == 'findPosition') {
-			getCoordinatesFromAddr(event.data.position);
-		} else if (event.data.operation == 'searchPosition') {
-			loadGeoJson(event.data.position);
-		} else if (event.data.operation == 'loadImgResult') {
-			loadImgResultUseEntity(event.data.imgAddr, event.data.leftUpPos, event.data.rightBottomPos, event.data.id);
-		} else if (event.data.operation == 'active') {
-			activePrimitive(event.data.id);
-		} else if (event.data.operation == 'inactive') {
-			inactiveImgResultUseEntity(event.data.id);
-		} else if (event.data.operation == 'markPosition') {
-			markPosition(event.data.lon, event.data.lat, event.data.id, event.data.imgAddr);
-		} else if (event.data.operation == 'loadMulImgResult') {
-			loadMulImgResult(event.data.imgAddrArr, event.data.leftUpPos, event.data.rightBottomPos);
-		}
-		
-	});
-	
-	function cleanup() {
-		viewer.entities.removeAll();
-		viewer.scene.primitives.removeAll();
-		primitives.clear();
-		for (let t of timer) {
-			window.clearInterval(t);
-		}
-		timer.length = 0;
-		currentIndex = 0;
-	}
-	
-	function getCoordinatesFromAddr(addr) {
-		return fetch(`http://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${addr}"}&tk=${tdtKey}`)
-			.then(response => response.json())
-			.then(data => {
-				console.log(data);
-				if (data.status === '0' && data.location) {
-					console.log(data.location);
-					return {lng: data.location.lng, lat: data.location.lat};
-				} else {
-					alert("未知的地点");
-				}
-			});
-	}
-	
-	function removeByFixedStep(arr, step = 2) {
-	  return arr.filter((_, index) => index % step == 0);
-	}
-	
-	function calculateScaleForBounds(viewer, minLon, minLat, maxLon, maxLat) {
-	  const ellipsoid = viewer.scene.globe.ellipsoid;
-	  const centerLat = (minLat + maxLat) / 2; // 中心纬度减少误差
-	  
-	  // 计算地理距离
-	  const geodesic = new Cesium.EllipsoidGeodesic();
-	  const start = Cesium.Cartographic.fromDegrees(minLon, centerLat);
-	  const end = Cesium.Cartographic.fromDegrees(maxLon, centerLat);
-	  geodesic.setEndPoints(start, end);
-	  const distance = geodesic.surfaceDistance;
-	  
-	  // 获取视图像素宽度
-	  const pixelWidth = viewer.scene.canvas.clientWidth;
-	  
-	  // 计算比例尺分母
-	  const resolution = distance / pixelWidth;
-	  const scaleDenominator = (96 * resolution) / 0.0254;
-	  console.log(scaleDenominator);
-	  return scaleDenominator;
-	}
-	
-	function flyToPositions(positions, minLng, minLat, maxLng, maxLat) {
-		const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
-		const cartographic = Cesium.Cartographic.fromCartesian(center);
-		const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
-		const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
-				
-		viewer.camera.flyTo({
-			destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
-		});
-	}
-	
-	function drawOutline(positions, id) {
-		const outlinePrimitive = new Cesium.Primitive({
-		  geometryInstances: new Cesium.GeometryInstance({
-			id: id + '-Outline',
-			geometry:new Cesium.PolygonOutlineGeometry({
-			  polygonHierarchy: new Cesium.PolygonHierarchy(
-				Cesium.Cartesian3.fromDegreesArray(positions)
-			  ),
-			  width: 10.0,              
-			  height: 2 * primitives.size + 0.1,
-			  vertexFormat: Cesium.PolylineColorAppearance.VERTEX_FORMAT
-			}),
-			attributes: {
-				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-				  activeColor // 红色线条
-				)
-			  }
-		  }),
-		  releaseGeometryInstances: false,
-		  asynchronous: false,
-		  appearance: new Cesium.PolylineColorAppearance()
-		});
-		
-		viewer.scene.primitives.add(outlinePrimitive);		
-		
-		return outlinePrimitive;
-	}
-	
-	function activePrimitive(id) {
-		for (let [key, value] of primitives) {
-			if (id == key) {
-				value[0].show = true;
-				// 获取目标primitive的geometryInstances
-				const instances = value[1].geometryInstances;
-				const newInstance = new Cesium.GeometryInstance({
-					id: key + '-Outline',
-					geometry: instances.geometry,
-					attributes: {
-						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-							activeColor
-						)
-					}
-				});
-				viewer.scene.primitives.remove(value[1]);
-				value[1] = new Cesium.Primitive({
-					geometryInstances: newInstance,
-					releaseGeometryInstances: false,
-					asynchronous: false,
-					appearance: new Cesium.PolylineColorAppearance({
-						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
-						translucent: true,
-						renderState: {
-							depthTest: { enabled: false },
-							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
-						}
-					})
-				});
-				viewer.scene.primitives.add(value[1]);
-				value[1].show = true;
-			} else {
-				const instances = value[1].geometryInstances;
-				const newInstance = new Cesium.GeometryInstance({
-					id: key + '-Outline',
-					geometry: instances.geometry,
-					attributes: {
-						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-							inactiveColor
-						)
-					}
-				});
-				viewer.scene.primitives.remove(value[1]);
-				value[1].destroy();
-				value[1] = null;
-				value[1] = new Cesium.Primitive({
-					geometryInstances: newInstance,
-					releaseGeometryInstances: false,
-					asynchronous: false,
-					appearance: new Cesium.PolylineColorAppearance({
-						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
-						translucent: true,
-						renderState: {
-							depthTest: { enabled: false },
-							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
-						}
-					})
-				});
-				viewer.scene.primitives.add(value[1]);
-				value[1].show = true;
-			}
-		}
-	}
-	
-	function inactivePrimitive(id) {
-		let primitive = primitives.get(id);
-		primitive[0].show = false;
-		const instances = primitive[1].geometryInstances;
-		const newInstance = new Cesium.GeometryInstance({
-			id: id + '-Outline',
-			geometry: instances.geometry,
-			attributes: {
-				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
-					inactiveColor
-				)
-			}
-		});
-		viewer.scene.primitives.remove(primitive[1]);
-		primitive[1].destroy();
-		primitive[1] = null;
-		primitive[1] = new Cesium.Primitive({
-			geometryInstances: newInstance,
-			releaseGeometryInstances: false,
-			asynchronous: false,
-			appearance: new Cesium.PolylineColorAppearance({
-				color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
-				translucent: true,
-				renderState: {
-					depthTest: { enabled: false },
-					lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
-				}
-			})
-		});
-		viewer.scene.primitives.add(primitive[1]);
-		primitive[1].show = true;
-	}
-	
-	function loadGeoJson(addr) {
-		Cesium.GeoJsonDataSource.load('./res/test.geojson', {
-			  stroke: inactiveColor,
-			  fill: Cesium.Color.WHITE.withAlpha(0.5)
-		  }).then(dataSource => {
-		  viewer.dataSources.add(dataSource);
-		  dataSource.entities.values.forEach(entity => {
-			if (entity.polygon) {
-			  const positions = entity.polygon.hierarchy.getValue().positions;
-			  /*entity.polyline = new Cesium.PolylineGraphics({
-				positions: positions,
-				width: 3,
-				material: activeColor.withAlpha(0.8),
-				clampToGround: true
-			  });*/
-			  //entity.polygon.fill = false; // 隐藏填充面
-			  
-			  let minLng, minLat, maxLng, maxLat = null;
-			  for (let position of positions) {
-				const cartographic = Cesium.Cartographic.fromCartesian(position);
-				const longitude = Cesium.Math.toDegrees(cartographic.longitude); // 经度
-				const latitude = Cesium.Math.toDegrees(cartographic.latitude);   // 纬度
-				if (!minLng || longitude < minLng) {
-					minLng = longitude;
-				}
-				if (!minLat || latitude < minLat) {
-					minLat = latitude;
-				}
-				if (!maxLng || longitude > maxLng) {
-					maxLng = longitude;
-				}
-				if (!maxLat || latitude > maxLat) {
-					maxLat = latitude;
-				}
-			  }
-			  
-			  const center = Cesium.BoundingSphere.fromPoints(positions).center;
-			  const cartographic = Cesium.Cartographic.fromCartesian(center);
-			  const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
-			  const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
-				
-			  viewer.camera.flyTo({
-				destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
-			  });
-			}
-		  });
-		}).catch(error => console.error('加载失败:', error));
-	}
-	
-	function loadImgResultUseEntity(imgAddr, leftUpPos, rightBottomPos, id) {
-		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
-						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
-		
-		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
-		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
-		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
-		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
-		
-		if (!entities.get(id)) {
-			const rectangle = viewer.entities.add({
-				name: 'Multiple Img Result',
-				rectangle: {
-					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
-					material: new Cesium.ImageMaterialProperty({
-						//添加回调
-						image: imgAddr,
-						transparent: true
-					}),
-					height: 0,
-					outline: true,
-					outlineColor: activeColor,
-					outlineWidth: 10,
-					clampToGround: false	
-				}
-			});
-			entities.set(id, {entity: rectangle, imgAddr: imgAddr});
-		} else {
-			for (let [key, value] of entities) {
-				if (key == id) {	
-					value.entity.rectangle.outlineColor = activeColor;
-					value.entity.rectangle.material = new Cesium.ImageMaterialProperty({
-						//添加回调
-						image: value.imgAddr,
-						transparent: true
-					});
-				} else {
-					value.entity.rectangle.outlineColor = inactiveColor;
-				}
-			}
-		}
-		
-		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
-	}
-	
-	function inactiveImgResultUseEntity(id) {
-		for (let [key, value] of entities) {
-			if (key == id) {
-				value.entity.rectangle.material = Cesium.Color.WHITE.withAlpha(0);
-				value.entity.rectangle.outlineColor = inactiveColor;
-			}
-		}
-	}
-	
-	function loadImgResult(imgAddr, leftUpPos, rightBottomPos, id) {
-		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
-						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
-		
-		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
-		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
-		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
-		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
-		
-		if (!primitives.get(id)) {				
-			const instances = [new Cesium.GeometryInstance({
-				id: id,
-				geometry: new Cesium.PolygonGeometry({
-					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
-					height: 10 * primitives.size,
-					perPositionHeight: false
-				}),
-				attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
-			})];
-			const imgPrimitive = new Cesium.Primitive({
-				id: id,
-				geometryInstances: instances,
-				releaseGeometryInstances: false,
-				asynchronous: false,
-				appearance: new Cesium.EllipsoidSurfaceAppearance({
-					material: new Cesium.Material({
-					  fabric: {
-						type: 'Image', // 指定图片类型材质:ml-citation{ref="5,6" data="citationList"}
-						uniforms: {
-						  image: imgAddr
-						}
-					  }
-					}),
-					flat: true
-				})
-			});
-			
-			viewer.scene.primitives.add(imgPrimitive);
-			
-			const outlinePrimitive = drawOutline(positions, id);
-			
-			
-			const collection = new Cesium.PrimitiveCollection();
-			collection.add(imgPrimitive);
-			collection.add(outlinePrimitive);
+    <section id="workflow" class="section-block glass-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Workflow</span>
+          <h2>简单三步，完成专业处理</h2>
+        </div>
+        <p>保留旧主页的三步流程说明，并重构成更接近 DestinE 平台节奏的时间轴式工作流程编排。</p>
+      </div>
 
-			Promise.all([imgPrimitive.readyPromise, outlinePrimitive.readyPromise])
-			  .then(() => {
-				primitives.set(id, [imgPrimitive, outlinePrimitive]);
-				activePrimitive(id);	
-			  })
-			  .catch(error => {
-				console.error("加载失败:", error);
-			  });
-			const checkInterval = setInterval(() => {
-			  if (collection.ready) {
-				clearInterval(checkInterval);
-				primitives.set(id, [imgPrimitive, outlinePrimitive]);
-				activePrimitive(id);		
-				console.log('所有Primitive加载完成');
-			  }
-			}, 100);
-		} else {
-			activePrimitive(id);						
-		}	
+      <div class="workflow-layout">
+        <div class="workflow-steps">
+          <article class="workflow-step paper-card">
+            <div class="step-index">01</div>
+            <div>
+              <h3>选择数据</h3>
+              <p>与可持续发展大数据国际研究中心、国家青藏高原科学数据中心、国家气象信息中心、中国气象局等机构建立合作关系，平台拥有丰富的数据资源。</p>
+            </div>
+          </article>
+          <article class="workflow-step paper-card">
+            <div class="step-index">02</div>
+            <div>
+              <h3>配置算法</h3>
+              <p>根据多尺度理论研究，设计合适的处理算法，并配置相应的参数。</p>
+            </div>
+          </article>
+          <article class="workflow-step paper-card">
+            <div class="step-index">03</div>
+            <div>
+              <h3>获取结果</h3>
+              <p>查看、分析和下载处理结果，支持多种格式导出。</p>
+            </div>
+          </article>
+        </div>
 
-		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
-	}
-	
-	function searchPosition(addr) {
-		return fetch(`./res/test.json`)
-			.then(response => response.json())
-			.then(data => {
-				let coordinates = data.geometry.coordinates[0][0];
-				let positions = [];
-				let minLng, minLat, maxLng, maxLat = null;
-				for (let coordinate of coordinates) {
-					positions.push(coordinate[0]);
-					positions.push(coordinate[1]);
-					if (!minLng || coordinate[0] < minLng) {
-						minLng = coordinate[0];
-					}
-					if (!minLat || coordinate[1] < minLat) {
-						minLat = coordinate[1];
-					}
-					if (!maxLng || coordinate[0] > maxLng) {
-						maxLng = coordinate[0];
-					}
-					if (!maxLat || coordinate[1] > maxLat) {
-						maxLat = coordinate[1];
-					}
-				}
-								
-				console.log(Cesium.Cartesian3.fromDegreesArray(positions));
-				/*const polygon = viewer.entities.add({
-                    polygon: {
-                        positions: Cesium.Cartesian3.fromDegreesArray(positions),
-						height: 0,
-                        perPositionHeight: false,
-                        material: activeColor.withAlpha(1),
-                        outline: true,
-                        outlineColor: inactiveColor,
-                        outlineWidth: 1
-                    }
-                });			
+        <figure class="workflow-illustration paper-card">
+          <img src="img/method.png" alt="红外地球平台三步工作流程示意图">
+          <figcaption>旧主页流程图已并入新版首页，作为工作流总览与方法说明的视觉锚点。</figcaption>
+        </figure>
+      </div>
+    </section>
 
-				console.log(polygon);*/
-				
-				const instances = [new Cesium.GeometryInstance({
-				  geometry: new Cesium.PolygonGeometry({
-					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
-					height: 0,
-					perPositionHeight: false
-				  }),
-				  attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
-				})];
-				viewer.scene.primitives.add(new Cesium.Primitive({
-				  geometryInstances: instances,
-				  appearance: new Cesium.PerInstanceColorAppearance({
-					flat: true, // 关键！
-					translucent: true,
-					renderState: {
-					  lineWidth: 3, // 设置边框粗细
-					  lineColor: activeColor
-					}
-				  })
-				}));
-												
-				const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
-				const cartographic = Cesium.Cartographic.fromCartesian(center);
-				const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
-				const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
-				
-				viewer.camera.flyTo({
-				  destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
-				});
-			});
-	}
-	
-	function loadImage(url) {
-		return new Promise((resolve, reject) => {
-			const img = new Image();
-			img.src = url;
-			img.onload = () => resolve(img);
-			img.onerror = reject;
-		});
-	}
+    <section id="scenarios" class="section-block glass-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Cases</span>
+          <h2>经典应用场景</h2>
+        </div>
+        <p>将旧主页的案例展示区迁入新版首页，用统一的卡片比例、标签体系和按钮风格呈现真实业务场景。</p>
+      </div>
 
-	async function imageArrayToCanvasArray(imageUrls) {
-		return Promise.all(imageUrls.map(async (url) => {
-			const img = await loadImage(url);
-			const canvas = document.createElement('canvas');
-			canvas.width = img.width;
-			canvas.height = img.height;
-			const ctx = canvas.getContext('2d');
-			ctx.drawImage(img, 0, 0);
-			return canvas;
-		}));
-	}
-	
-	function updateImgFrame() {
-		currentIndex = (currentIndex + 1) % imageUrls.length;
-		return imageUrls[currentIndex];
-	}
-	
-	function loadMulImgResult(imgAddrArr, leftUpPos, rightBottomPos) {
-		cleanup();
-		
-		viewer.scene.mode = Cesium.SceneMode.SCENE2D;
-				
-		let currentIndex = 0;
-		
-		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
-		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
-		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
-		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
-		
-		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
-						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
-		
-		imageArrayToCanvasArray(imgAddrArr).then(imgList => {
-			console.log(imgList);
-			const rectangle = viewer.entities.add({
-				name: 'Multiple Img Result',
-				rectangle: {
-					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
-					material: new Cesium.ImageMaterialProperty({
-						//添加回调
-						image: imgList[currentIndex],
-						transparent: true
-					})
-				}
-			});
-			
-			if (minLng == -180 && maxLng == 180 && minLng == -90 && maxLng == -90) {
-				viewer.camera.flyTo({
-				  destination: Cesium.Cartesian3.fromDegrees(0, 0, 5000000)
-				});
-			} else {
-				flyToPositions(positions, minLng, minLat, maxLng, maxLat);
-			}			
-			
-			let t = window.setInterval(() => {  
-			  currentIndex = (currentIndex + 1) % imgList.length;  
-			  rectangle.rectangle.material.image = imgList[currentIndex];
-			}, 1000);
-			timer.push(t);
-		});
-	}
-	
-	function markPosition(lon, lat, id, imgAddr) {
-		const center = lon + ',' + lat;
-		if (!billboards.get(center)) {		
-			const billboards = viewer.scene.primitives.add(
-			  new Cesium.BillboardCollection()
-			);
-			
-			const billboard = billboards.add({
-			  id: id,
-			  image: imgAddr,
-			  position: Cesium.Cartesian3.fromDegrees(lon, lat),
-			  width: 50,
-			  height: 50
-			});
-			
-			billboards.set(center, {billboards: billboards, imgAddrArr: [imgAddr]});		
-		} else {
-			let obj = billboards.get(center);
-			obj.imgAddrArr.push(imgAddr);
-		}
-		viewer.camera.flyTo({
-		  destination: Cesium.Cartesian3.fromDegrees(lon, lat, 5000000)
-		});
-	}
-	
-	
-	function inactivePosition(id) {
-		if (primitives.get(id)) {
-			primitives.get(id).show = false;
-		}
-	}
-	
-	function getZoomLevel(viewer) {
-	  const height = viewer.camera.positionCartographic.height;
-	  return Math.ceil(21 - Math.log(height / 1000) / Math.LN2) - 4; // 层级公式
-	}
+      <div class="scenario-grid">
+        <article class="scenario-card paper-card">
+          <div class="scenario-media">
+            <img src="img/台风.png" alt="杜苏芮超强台风案例图">
+            <span class="scenario-tag">台风</span>
+          </div>
+          <div class="scenario-body">
+            <h3>杜苏芮超强台风 (2023)</h3>
+            <div class="scenario-meta"><span>海洋</span><span>科学数据</span></div>
+            <p>基于 ERA5 数据集，利用 Aurora 模型处理，用于海洋环境监测和气候变化研究。</p>
+            <a class="inline-action" href="deepseek_html_案例分析.html">查看详情</a>
+          </div>
+        </article>
 
-	function calculateScaleDenominator(viewer) {
-	  let scale = null;
-	  let centerX = viewer._lastWidth / 2;
-	  let centerY = viewer._lastHeight / 2;
-	  let cartesian2 = new Cesium.Cartesian2(centerX, centerY);
-	  let ray = viewer.camera.getPickRay(cartesian2);
-	  let cartesian = viewer.scene.globe.pick(ray, viewer.scene);
-	  if (cartesian) {
-		let boundingSphere = new Cesium.BoundingSphere();
-		boundingSphere.center = cartesian;
-		boundingSphere.radius = 0.1;
-		let resolution = viewer.scene.camera.getPixelSize(
-		  boundingSphere, 
-		  viewer.scene.context.drawingBufferWidth,
-		  viewer.scene.context.drawingBufferHeight
-		);
-		scale = (96 * resolution) / 0.0254;
-		return { scale: scale, resolution: resolution };
-	  } else {
-		return { scale: '-', resolution: '-' };
-	  }
-	}
+        <article class="scenario-card paper-card">
+          <div class="scenario-media">
+            <img src="img/地震.png" alt="缅甸地震案例图">
+            <span class="scenario-tag secondary">地震</span>
+          </div>
+          <div class="scenario-body">
+            <h3>缅甸地震 (2025)</h3>
+            <div class="scenario-meta"><span>陆地</span><span>科学数据</span></div>
+            <p>利用风云卫星的热红外产品数据，结合地表位移场反演，分析地震早期特征。</p>
+            <a class="inline-action" href="地震介绍.html">查看详情</a>
+          </div>
+        </article>
 
-	function getResolution(scale) {
-	  return scale * 0.0254 / 96; // 96为屏幕DPI, 0.0254英寸转米
-	}
-	
-  </script>
+        <article class="scenario-card paper-card">
+          <div class="scenario-media">
+            <img src="img/红外预警.png" alt="全球舰船检测案例图">
+            <span class="scenario-tag accent">态势监测</span>
+          </div>
+          <div class="scenario-body">
+            <h3>全球舰船检测 (2023)</h3>
+            <div class="scenario-meta"><span>全球海域</span><span>应急响应</span></div>
+            <p>基于 Landsat 和 SDGSAT-1 影像数据，追踪全球范围内的船舶航迹，用于安全态势预警与应急响应。</p>
+            <a class="inline-action" href="ship.html">查看详情</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact" class="section-block glass-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Contact</span>
+          <h2>联系我们</h2>
+        </div>
+        <p>保留旧主页联系区的信息与表单，但本轮只做展示型交互，不新增后端保存接口。</p>
+      </div>
+
+      <div class="contact-grid">
+        <div class="contact-form-card paper-card">
+          <h3>发送留言</h3>
+          <p>填写信息后会调用本地邮件客户端生成邮件草稿，便于直接与平台团队联系。</p>
+          <form id="contactForm" class="contact-form">
+            <div class="field-grid">
+              <label>
+                <span>姓名</span>
+                <input type="text" name="name" placeholder="请输入您的姓名">
+              </label>
+              <label>
+                <span>邮箱</span>
+                <input type="email" name="email" placeholder="请输入您的邮箱">
+              </label>
+            </div>
+            <label>
+              <span>主题</span>
+              <input type="text" name="subject" placeholder="请输入联系主题">
+            </label>
+            <label>
+              <span>留言内容</span>
+              <textarea name="message" rows="5" placeholder="请输入您的留言内容"></textarea>
+            </label>
+            <div class="form-actions">
+              <button class="accent-btn" type="submit">生成邮件草稿</button>
+              <span id="contactStatus" class="form-status" aria-live="polite"></span>
+            </div>
+          </form>
+        </div>
+
+        <div class="contact-side">
+          <article class="info-card glass-card">
+            <div class="info-icon">地</div>
+            <div>
+              <strong>地址</strong>
+              <p>上海市虹口区玉田路500号</p>
+            </div>
+          </article>
+          <article class="info-card glass-card">
+            <div class="info-icon">邮</div>
+            <div>
+              <strong>邮箱</strong>
+              <p><a href="mailto:infraredearth@mail.sitp.ac.cn">infraredearth@mail.sitp.ac.cn</a></p>
+            </div>
+          </article>
+          <article class="info-card glass-card">
+            <div class="info-icon">电</div>
+            <div>
+              <strong>电话</strong>
+              <p><a href="tel:+02125050000">+021 2505 0000</a></p>
+            </div>
+          </article>
+          <article class="info-card glass-card">
+            <div class="info-icon">页</div>
+            <div>
+              <strong>直达页面</strong>
+              <p class="link-group">
+                <a href="deepseek_html_数据搜索_v1.html">影像检索</a>
+                <a href="deepseek_html_模型分析_v1.html">模型处理</a>
+                <a href="deepseek_html_案例分析.html">案例展示</a>
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer glass-card">
+    <div class="footer-grid">
+      <section class="footer-branding">
+        <div class="footer-brand">
+          <span class="brand-flag">IE</span>
+          <div>
+            <strong>Infrared Earth</strong>
+            <span>红外极端事件演化与分析平台</span>
+          </div>
+        </div>
+        <p>
+          红外地球主页已切换为新的门户版本，并兼容迁入平台介绍、流程、案例和联系信息，
+          作为当前项目的唯一默认首页。
+        </p>
+      </section>
+
+      <section>
+        <h3>快速链接</h3>
+        <div class="footer-links">
+          <a href="#home">首页</a>
+          <a href="#modules">业务模块</a>
+          <a href="#about-platform">关于平台</a>
+          <a href="#workflow">工作流程</a>
+          <a href="#scenarios">经典案例</a>
+        </div>
+      </section>
+
+      <section>
+        <h3>支持服务</h3>
+        <div class="footer-links">
+          <a href="deepseek_html_数据搜索_v1.html">影像检索页</a>
+          <a href="deepseek_html_模型分析_v1.html">模型处理页</a>
+          <a href="deepseek_html_案例分析.html">案例展示页</a>
+          <a href="#contact">联系我们</a>
+          <a href="#workflow">使用流程</a>
+        </div>
+      </section>
+
+      <section>
+        <h3>订阅更新</h3>
+        <p>订阅平台动态与案例更新，提交后将生成一封发往平台邮箱的订阅邮件草稿。</p>
+        <form id="subscribeForm" class="subscribe-form">
+          <input type="email" name="email" placeholder="请输入邮箱地址">
+          <button type="submit">订阅</button>
+        </form>
+        <span id="subscribeStatus" class="form-status" aria-live="polite"></span>
+      </section>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 红外地球平台. 保留所有权利.</span>
+      <div class="footer-bottom-links">
+        <a href="#about-platform">平台说明</a>
+        <a href="#contact">联系团队</a>
+        <a href="#scenarios">案例目录</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./js/home-portal.js" defer></script>
 </body>
 </html>

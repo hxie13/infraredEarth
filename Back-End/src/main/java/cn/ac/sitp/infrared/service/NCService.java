@@ -3,6 +3,7 @@ package cn.ac.sitp.infrared.service;
 import cn.ac.sitp.infrared.datasource.dao.AxrrAccount;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ public interface NCService {
     void addDataset(List<Long> ncIdList, AxrrAccount user);
 
     InputStream getNcFileStream(Long id) throws Exception ;
+
+    Path getNcFilePath(Long id) throws Exception;
 
     Map<String, Object> getNCTypeList();
 }

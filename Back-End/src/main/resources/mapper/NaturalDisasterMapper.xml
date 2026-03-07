@@ -55,46 +55,49 @@
         nd.img_path as imgPath,
         nd.description
         from natural_disaster nd
-        where longitude is not null and latitude is not null
-        order by nd.id
         <where>
-            <if test="country != null">
+            nd.longitude is not null
+            and nd.latitude is not null
+            <if test="country != null and country != ''">
                 and nd.country like '%' || #{country} || '%'
             </if>
-            <if test="place != null">
+            <if test="place != null and place != ''">
                 and nd.location like '%' || #{place} || '%'
             </if>
-            <if test="type != null">
+            <if test="type != null and type != ''">
                 and nd.disaster_type like '%' || #{type} || '%'
             </if>
             <if test="begin_date != null">
-                and #{begin_date} &gt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp
+                and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp &gt;= #{begin_date}
             </if>
             <if test="end_date != null">
-                and #{end_date} &lt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp
+                and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp &lt;= #{end_date}
             </if>
         </where>
+        order by nd.id
         limit #{page_size} offset #{offset}
     </select>
 
     <select id="selectNaturalDisasterCount" resultType="int">
-        select count(*) from natural_disaster
-        where longitude is not null and latitude is not null
+        select count(*)
+        from natural_disaster nd
         <where>
-            <if test="country != null">
+            nd.longitude is not null
+            and nd.latitude is not null
+            <if test="country != null and country != ''">
                 and nd.country like '%' || #{country} || '%'
             </if>
-            <if test="place != null">
+            <if test="place != null and place != ''">
                 and nd.location like '%' || #{place} || '%'
             </if>
-            <if test="type != null">
+            <if test="type != null and type != ''">
                 and nd.disaster_type like '%' || #{type} || '%'
             </if>
             <if test="begin_date != null">
-                and #{begin_date} &gt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp
+                and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp &gt;= #{begin_date}
             </if>
             <if test="end_date != null">
-                and #{end_date} &lt;= (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp
+                and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 23:59:59')::timestamp &lt;= #{end_date}
             </if>
         </where>
     </select>

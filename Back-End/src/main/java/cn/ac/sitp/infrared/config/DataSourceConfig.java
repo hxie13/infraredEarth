@@ -27,7 +27,6 @@ public class DataSourceConfig {
     @ConfigurationProperties(prefix = "spring.datasource.infrareddb")
     @Primary
     public DataSource dataSource() {
-        System.out.println(prop.url);
         return DataSourceBuilder.create().driverClassName(prop.driverClassName).url(prop.url)
                 .username(prop.username).password(prop.password).build();
     }
@@ -55,14 +54,5 @@ public class DataSourceConfig {
     public SqlSessionTemplate infrareddbSqlSessionTemplate(
             @Qualifier("infrareddbSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
-    }
-
-    private Class getType(String type) {
-        try {
-            return Class.forName(type);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

@@ -14,5 +14,8 @@ public interface AuditLogService {
     void saveAuditLogDesc(String ip, LogActionEnum action, String status, Date receivedTime, String exception,
                           String hospitalCode, String patid, String patname, String patsex, Date patdob, String description, AxrrAccount account);
 
+    void saveAuditLog(String ip, LogActionEnum action, String status, Date receivedTime, String exception,
+                      String description, AxrrAccount account);
+
     Map<String, Object> getLogList(int currPage, int pageSize, Date beginDate, Date endDate);
 }

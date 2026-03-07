@@ -18,6 +18,11 @@
     <script src="https://unpkg.com/element-plus"></script>
     <!-- 引入axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+      const APP_ORIGIN = window.location.origin;
+      const APP_BASE_URL = `${APP_ORIGIN}/infrared`;
+      const buildApiUrl = (path) => `${APP_BASE_URL}${path}`;
+    </script>
 
 	
      
@@ -944,9 +949,10 @@
     transition: var(--el-transition-duration);
 }
 </style>
+    <link rel="stylesheet" href="./css/destine-theme.css">
 </head>
 
-<body>
+<body class="destine-theme">
   <div id="app" >
     
     <nav class="navbar">
@@ -960,7 +966,7 @@
         
         <!-- 主导航链接 -->
         <div class="nav-links">
-                <a href="index_v0704.html" class="nav-link">首页</a>
+                <a href="index.html" class="nav-link">首页</a>
                  <a href="deepseek_html_数据搜索_v1.html" class="nav-link active" >数据检索</a>
             <a href="deepseek_html_模型分析_v1.html" class="nav-link ">模型分析</a>
                <a href="deepseek_html_案例分析.html" class="nav-link">案例分析</a>
@@ -1583,7 +1589,11 @@
 	  //绘制矩形
 		// document.getElementById('drawPolygon').style.background = "#FFF";
 		 //document.getElementById('clearAll').style.background = "#FFF";
-        document.getElementById('drawPolygon').style.background = "rgba(0, 168, 255, 0.2)"
+        document.getElementById('drawPolygon').classList.add('is-active')
+        const clearButton = document.getElementById('clearAll');
+        if (clearButton) {
+          clearButton.classList.remove('is-active');
+        }
 		 draw(viewer, 'Rectangle', { continueDraw: false, removeLast: false }, entity => {
 			  console.log('👉 ~ 多边形实体:', entity)
 			});
@@ -2073,7 +2083,7 @@ document.getElementById('myTable').addEventListener('change', function() {
    const ncGeometry =   JSON.parse(rowData[3])
    console.log("ncGeometry",ncGeometry)
   const coordinates = ncGeometry.coordinates[0]
-  const imgAddr = "http://localhost:8080/infrared/rest/nc/file/" +  rowData[2]
+  const imgAddr = buildApiUrl("/rest/nc/file/" + rowData[2])
   console.log(imgAddr)
   const leftUpPos = {lon:coordinates[0][0],lat:coordinates[2][1]}
   const rightBottomPos = {lon:coordinates[2][0],lat:coordinates[0][1]}
@@ -2641,7 +2651,7 @@ table.addEventListener('click', function(event) {
                 showUserList(){
                     //使用axios自定义配置，访问指定地址
                     const request = axios.create({
-                        baseURL: 'http://localhost:8080'
+                        baseURL: window.location.origin
                     })
                     const data ={
                       "region_name": "北京"
@@ -2663,7 +2673,7 @@ table.addEventListener('click', function(event) {
 				getType(){
                     //使用axios自定义配置，访问指定地址
                     const request = axios.create({
-                        baseURL: 'http://localhost:8080'
+                        baseURL: window.location.origin
                     })
                     const data ={};
                     request

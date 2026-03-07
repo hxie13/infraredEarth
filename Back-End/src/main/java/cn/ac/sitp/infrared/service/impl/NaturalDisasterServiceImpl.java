@@ -4,16 +4,11 @@ import cn.ac.sitp.infrared.datasource.dao.Img;
 import cn.ac.sitp.infrared.datasource.dao.NaturalDisaster;
 import cn.ac.sitp.infrared.datasource.mapper.NaturalDisasterMapper;
 import cn.ac.sitp.infrared.service.NaturalDisasterService;
+import cn.ac.sitp.infrared.service.StoredFileResolver;
 import cn.ac.sitp.infrared.util.Util;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +16,12 @@ import java.util.Map;
 
 @Service
 public class NaturalDisasterServiceImpl implements NaturalDisasterService {
-    private static final Log LOG = LogFactory.getLog(NaturalDisasterServiceImpl.class);
 
     @Autowired
     private NaturalDisasterMapper naturalDisasterMapper;
+
+    @Autowired
+    private StoredFileResolver storedFileResolver;
 
     @Override
     public Map<String, Object> getNaturalDisasterList(int currPage, int pageSize, Date beginDate, Date endDate,
@@ -39,13 +36,23 @@ public class NaturalDisasterServiceImpl implements NaturalDisasterService {
     }
 
     @Override
-    public Map<String, Object> getNaturalDisasterFileStream(Long id, Integer imgType) throws Exception {
-        Map<String, Object> contents = new HashMap<>();
-        List<Img> imgList= naturalDisasterMapper.getImgPathById(id, imgType);
-        if (imgList == null || imgList.isEmpty()) {
-            throw new FileNotFoundException("Natural disaster files not found for ID: " + id);
+    public Map<String, Object> getNaturalDisasterFileData(Long id, Integer imgType) {
+        List<Img> imgList = naturalDisasterMapper.getImgPathById(id, imgType);
+        if (imgList != null) {
+            for (Img img : imgList) {
+                String imgPath = img.getImgPath();
+                if (imgPath == null || imgPath.isBlank()) {
+                    continue;
+                }
+                try {
+                    img.setImgPath(storedFileResolver.resolveExistingFile(imgPath).toString());
+                } catch (Exception ignored) {
+                    // Keep the stored path unchanged so legacy records can still be retried by /rest/file.
+                }
+            }
         }
-        contents.put("imgList", imgList);
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("imgList", imgList == null ? List.of() : imgList);
         return contents;
     }
 

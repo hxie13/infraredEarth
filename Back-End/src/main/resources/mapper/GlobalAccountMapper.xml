@@ -27,7 +27,7 @@
                                                 go.fk_organizationno and o.valid = 'Y'
                  JOIN t_control_group g ON g.id = go.fk_groupno
                  JOIN t_control_user_group_role ugr on g.id = ugr.fk_group_no
-        where ugr.fk_user_no = ${userno}
+        where ugr.fk_user_no = #{userno}
     </select>
 
     <resultMap
@@ -52,8 +52,8 @@
             ugr.fk_role_no = rp.fk_role_no
                  JOIN t_control_group_organization go ON
             ugr.fk_group_no = go.fk_groupno
-        where ugr.fk_user_no = ${userno}
-          and go.fk_organizationno = ${organization_no}
+        where ugr.fk_user_no = #{userno}
+          and go.fk_organizationno = #{organization_no}
     </select>
 
     <select id="getRoleList" parameterType="java.util.Map"

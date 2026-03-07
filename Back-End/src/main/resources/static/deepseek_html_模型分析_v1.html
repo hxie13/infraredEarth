@@ -19,6 +19,11 @@
     <script src="https://unpkg.com/element-plus"></script>
     <!-- 引入axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+      const APP_ORIGIN = window.location.origin;
+      const APP_BASE_URL = `${APP_ORIGIN}/infrared`;
+      const buildApiUrl = (path) => `${APP_BASE_URL}${path}`;
+    </script>
     <style>
         :root {
             --primary-color: #00a8ff;
@@ -819,8 +824,9 @@
 
 .button4 {border-radius: 10px;}
     </style>
-</head>
-<body>
+    <link rel="stylesheet" href="./css/destine-theme.css">
+  </head>
+  <body class="destine-theme">
     <div id="app">
     
     <nav class="navbar">
@@ -834,7 +840,7 @@
         
         <!-- 主导航链接 -->
         <div class="nav-links">  
-			   <a href="index_v0704.html" class="nav-link">首页</a>
+			   <a href="index.html" class="nav-link">首页</a>
                  <a href="deepseek_html_数据搜索_v1.html" class="nav-link" >数据检索</a>
             <a href="deepseek_html_模型分析_v1.html" class="nav-link active" >模型分析</a>
                <a href="deepseek_html_案例分析.html" class="nav-link" >案例分析</a>
@@ -2105,7 +2111,7 @@
                  showUserList2(){
                     //使用axios自定义配置，访问指定地址
                     const request = axios.create({
-                        baseURL: 'http://202.127.1.101:9901'
+                        baseURL: window.location.origin
                     })
                     const data2 ={};
                     request

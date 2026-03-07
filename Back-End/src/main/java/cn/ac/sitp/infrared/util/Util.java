@@ -6,6 +6,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -29,6 +31,7 @@ public class Util {
     private static final String RESPONSE_RESULT_SUCCESS = "Success";
     private static final String RESPONSE_RESULT_FAILURE = "Failure";
     private static final String RESPONSE_RESULT_LOGGED_OUT = "Logged_out";
+    public static final String GENERIC_ERROR_MESSAGE = "Internal server error";
     private static ExecutorService fixedThreadPool;
 
     public static ExecutorService getThreadPool() {
@@ -150,6 +153,13 @@ public class Util {
         contents.put(RESPONSE_STATUS, RESPONSE_RESULT_FAILURE);
         contents.put(RESPONSE_ERROR_CODE, errorCode);
         return contents;
+    }
+
+    public static String getStackTrace(Throwable throwable) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        throwable.printStackTrace(pw);
+        return sw.toString();
     }
 
     public static String base64encode(String str) {

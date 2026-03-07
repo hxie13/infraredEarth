@@ -32,9 +32,9 @@ public class AuditLogServiceImpl implements AuditLogService {
         log.setEvent_name(action.toString());
         log.setClient_ip(ip);
         if (account == null) {
-            log.setUser_id("localhost");
-            log.setUser_name("localhost");
-            log.setDisplay_name("localhost");
+            log.setUser_id("anonymous");
+            log.setUser_name("anonymous");
+            log.setDisplay_name("anonymous");
         } else {
             log.setUser_id(account.getUserid());
             log.setUser_name(account.getUsername());
@@ -53,6 +53,12 @@ public class AuditLogServiceImpl implements AuditLogService {
         List<AxrrAuditEvent> logList = logMapper.selectLogList(pageSize * (currPage - 1), pageSize, beginDate, endDate);
         contents.put("logList", logList);
         return contents;
+    }
+
+    @Override
+    public void saveAuditLog(String ip, LogActionEnum action, String status, Date receivedTime, String exception,
+                             String description, AxrrAccount account) {
+        saveAuditLogDesc(ip, action, status, receivedTime, exception, null, null, null, null, null, description, account);
     }
 
     @Override
