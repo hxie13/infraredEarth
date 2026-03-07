@@ -12,4 +12,6 @@ public interface AccountService {
 
     AxrrAccount updatePassword(String username, String oldPassword, String password) throws Exception;
 
+    AxrrAccount registerAccount(String username, String password, String displayname, String email) throws Exception;
+
 }

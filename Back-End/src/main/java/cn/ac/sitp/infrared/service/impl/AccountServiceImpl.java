@@ -132,4 +132,50 @@ public class AccountServiceImpl implements AccountService {
         accountMapper.updatePassword(user);
         return account;
     }
+
+    @Override
+    @Transactional
+    public AxrrAccount registerAccount(String username, String password, String displayname, String email) throws Exception {
+        // Validate input
+        if (username == null || username.trim().isEmpty()) {
+            throw new AccountAuthenticationException("Username is required");
+        }
+        if (password == null || password.length() < 6) {
+            throw new AccountAuthenticationException("Password must be at least 6 characters");
+        }
+        if (displayname == null || displayname.trim().isEmpty()) {
+            throw new AccountAuthenticationException("Display name is required");
+        }
+        
+        // Check if username already exists
+        if (accountMapper.countUserByUsername(username) > 0) {
+            throw new AccountAuthenticationException("Username already exists");
+        }
+        
+        // Check if email already exists (if provided)
+        if (email != null && !email.trim().isEmpty()) {
+            if (accountMapper.countUserByEmail(email) > 0) {
+                throw new AccountAuthenticationException("Email already exists");
+            }
+        }
+        
+        // Generate unique userid
+        String userid = "USER_" + System.currentTimeMillis();
+        
+        // Hash password with BCrypt
+        String hashedPassword = passwordService.hashPassword(password);
+        
+        // Create new user
+        AxrrUser user = new AxrrUser();
+        user.setUserid(userid);
+        user.setUsername(username);
+        user.setPassword(hashedPassword);
+        user.setDisplayname(displayname);
+        user.setEmail(email);
+        
+        accountMapper.insertUser(user);
+        
+        // Return the created account
+        return accountMapper.getUserByName(username);
+    }
 }

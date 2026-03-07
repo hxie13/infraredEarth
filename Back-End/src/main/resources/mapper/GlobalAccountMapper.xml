@@ -114,4 +114,41 @@
         WHERE userid = #{userid}
     </update>
 
+    <select id="countUserByUsername" resultType="int">
+        SELECT COUNT(*) FROM t_control_user WHERE username = #{username}
+    </select>
+
+    <select id="countUserByEmail" resultType="int">
+        SELECT COUNT(*) FROM t_control_user WHERE email = #{email}
+    </select>
+
+    <insert id="insertUser" parameterType="cn.ac.sitp.infrared.datasource.dao.AxrrUser"
+            useGeneratedKeys="true" keyProperty="userno" keyColumn="userno">
+        INSERT INTO t_control_user (
+            userid,
+            username,
+            password,
+            displayname,
+            email,
+            type,
+            creationtime,
+            updatetime,
+            lock_status,
+            failure_count,
+            fk_role_no
+        ) VALUES (
+            #{userid},
+            #{username},
+            #{password},
+            #{displayname},
+            #{email},
+            'User',
+            now(),
+            now(),
+            'N',
+            0,
+            1
+        )
+    </insert>
+
 </mapper>

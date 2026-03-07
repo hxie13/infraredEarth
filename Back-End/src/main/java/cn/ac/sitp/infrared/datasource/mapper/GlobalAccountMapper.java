@@ -23,4 +23,10 @@ public interface GlobalAccountMapper {
     void increaseFailureCount(String userid);
 
     void updatePassword(AxrrUser user);
+
+    int countUserByUsername(String username);
+
+    int countUserByEmail(String email);
+
+    void insertUser(AxrrUser user);
 }

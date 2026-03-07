@@ -34,9 +34,17 @@
       <a class="js-nav-link" href="#contact">联系我们</a>
     </nav>
 
-    <div class="platform-actions">
-      <a class="ghost-btn" href="deepseek_html_数据搜索_v1.html">影像检索</a>
-      <a class="accent-btn" href="deepseek_html_模型分析_v1.html">模型处理</a>
+    <div class="platform-actions" id="userActions">
+      <!-- 未登录状态 -->
+      <div id="guestActions">
+        <button class="ghost-btn" onclick="openLoginModal()">登录</button>
+        <button class="accent-btn" onclick="openRegisterModal()">注册</button>
+      </div>
+      <!-- 已登录状态 (默认隐藏) -->
+      <div id="loggedInActions" style="display: none;">
+        <span id="userDisplayName" style="color: #fff; margin-right: 10px;"></span>
+        <button class="ghost-btn" onclick="logout()">退出</button>
+      </div>
     </div>
   </header>
 
@@ -479,6 +487,377 @@
     </div>
   </footer>
 
+  <!-- 登录弹窗 -->
+  <div id="loginModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-content glass-card">
+      <div class="auth-modal-header">
+        <h3>用户登录</h3>
+        <button class="auth-close-btn" onclick="closeLoginModal()">&times;</button>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <div class="auth-form-group">
+          <label>用户名</label>
+          <input type="text" id="loginUsername" name="username" placeholder="请输入用户名" required>
+        </div>
+        <div class="auth-form-group">
+          <label>密码</label>
+          <input type="password" id="loginPassword" name="password" placeholder="请输入密码" required>
+        </div>
+        <div class="auth-form-actions">
+          <button type="submit" class="accent-btn">登录</button>
+        </div>
+        <div id="loginError" class="auth-error"></div>
+        <div class="auth-switch">
+          还没有账号？<a href="#" onclick="switchToRegister()">立即注册</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 注册弹窗 -->
+  <div id="registerModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-content glass-card">
+      <div class="auth-modal-header">
+        <h3>用户注册</h3>
+        <button class="auth-close-btn" onclick="closeRegisterModal()">&times;</button>
+      </div>
+      <form id="registerForm" class="auth-form">
+        <div class="auth-form-group">
+          <label>用户名 <span class="auth-required">*</span></label>
+          <input type="text" id="registerUsername" name="username" placeholder="请输入用户名" required>
+        </div>
+        <div class="auth-form-group">
+          <label>密码 <span class="auth-required">*</span></label>
+          <input type="password" id="registerPassword" name="password" placeholder="至少6位字符" required minlength="6">
+        </div>
+        <div class="auth-form-group">
+          <label>显示名称 <span class="auth-required">*</span></label>
+          <input type="text" id="registerDisplayName" name="displayname" placeholder="请输入显示名称" required>
+        </div>
+        <div class="auth-form-group">
+          <label>邮箱</label>
+          <input type="email" id="registerEmail" name="email" placeholder="请输入邮箱（可选）">
+        </div>
+        <div class="auth-form-actions">
+          <button type="submit" class="accent-btn">注册</button>
+        </div>
+        <div id="registerError" class="auth-error"></div>
+        <div id="registerSuccess" class="auth-success"></div>
+        <div class="auth-switch">
+          已有账号？<a href="#" onclick="switchToLogin()">立即登录</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <style>
+    /* 认证弹窗样式 */
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(5px);
+    }
+    .auth-modal-content {
+      width: 90%;
+      max-width: 400px;
+      padding: 24px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .auth-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .auth-modal-header h3 {
+      margin: 0;
+      color: #f8fafc;
+      font-size: 1.25rem;
+    }
+    .auth-close-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .auth-close-btn:hover {
+      background: rgba(148, 163, 184, 0.2);
+      color: #f8fafc;
+    }
+    .auth-form-group {
+      margin-bottom: 16px;
+    }
+    .auth-form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+      font-size: 0.875rem;
+    }
+    .auth-required {
+      color: #ef4444;
+    }
+    .auth-form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      color: #f8fafc;
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .auth-form-group input:focus {
+      outline: none;
+      border-color: #60a5fa;
+    }
+    .auth-form-group input::placeholder {
+      color: #64748b;
+    }
+    .auth-form-actions {
+      margin-top: 20px;
+    }
+    .auth-form-actions button {
+      width: 100%;
+      padding: 12px;
+      font-size: 0.9375rem;
+    }
+    .auth-error {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .auth-success {
+      color: #22c55e;
+      font-size: 0.875rem;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .auth-switch {
+      text-align: center;
+      margin-top: 16px;
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+    .auth-switch a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .auth-switch a:hover {
+      text-decoration: underline;
+    }
+    #userDisplayName {
+      font-weight: 500;
+      color: #60a5fa;
+    }
+  </style>
+
   <script src="./js/home-portal.js" defer></script>
+  <script>
+    // AES 加密密钥 (与后端保持一致)
+    const AES_KEY = 'SITP0123456789AB';
+
+    // 检查登录状态
+    function checkLoginStatus() {
+      fetch('/infrared/rest/account/login')
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'Success' && data.account) {
+            showLoggedInState(data.account);
+          } else {
+            showGuestState();
+          }
+        })
+        .catch(() => showGuestState());
+    }
+
+    // 显示已登录状态
+    function showLoggedInState(account) {
+      document.getElementById('guestActions').style.display = 'none';
+      document.getElementById('loggedInActions').style.display = 'flex';
+      document.getElementById('userDisplayName').textContent = account.displayname || account.username;
+    }
+
+    // 显示游客状态
+    function showGuestState() {
+      document.getElementById('guestActions').style.display = 'flex';
+      document.getElementById('loggedInActions').style.display = 'none';
+    }
+
+    // 打开登录弹窗
+    function openLoginModal() {
+      document.getElementById('loginModal').style.display = 'flex';
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('loginUsername').focus();
+    }
+
+    // 关闭登录弹窗
+    function closeLoginModal() {
+      document.getElementById('loginModal').style.display = 'none';
+    }
+
+    // 打开注册弹窗
+    function openRegisterModal() {
+      document.getElementById('registerModal').style.display = 'flex';
+      document.getElementById('registerError').textContent = '';
+      document.getElementById('registerSuccess').textContent = '';
+      document.getElementById('registerUsername').focus();
+    }
+
+    // 关闭注册弹窗
+    function closeRegisterModal() {
+      document.getElementById('registerModal').style.display = 'none';
+    }
+
+    // 切换到注册
+    function switchToRegister() {
+      closeLoginModal();
+      openRegisterModal();
+    }
+
+    // 切换到登录
+    function switchToLogin() {
+      closeRegisterModal();
+      openLoginModal();
+    }
+
+    // 简单的 AES 加密 (CBC 模式)
+    async function aesEncrypt(text, key) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text);
+      const keyData = encoder.encode(key);
+      
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw', keyData, { name: 'AES-CBC' }, false, ['encrypt']
+      );
+      
+      const iv = encoder.encode('A-16-Byte-String');
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-CBC', iv }, cryptoKey, data
+      );
+      
+      return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+    }
+
+    // 登录表单提交
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        const encryptedUsername = await aesEncrypt(username, AES_KEY);
+        const encryptedPassword = await aesEncrypt(password, AES_KEY);
+        
+        const response = await fetch('/infrared/rest/account/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: encryptedUsername,
+            password: encryptedPassword
+          })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'Success') {
+          closeLoginModal();
+          showLoggedInState(data.account);
+        } else {
+          document.getElementById('loginError').textContent = 
+            data.errorCode || '登录失败，请检查用户名和密码';
+        }
+      } catch (err) {
+        document.getElementById('loginError').textContent = '登录请求失败，请稍后重试';
+      }
+    });
+
+    // 注册表单提交
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const username = document.getElementById('registerUsername').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const displayname = document.getElementById('registerDisplayName').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      
+      document.getElementById('registerError').textContent = '';
+      document.getElementById('registerSuccess').textContent = '';
+      
+      try {
+        const encryptedUsername = await aesEncrypt(username, AES_KEY);
+        const encryptedPassword = await aesEncrypt(password, AES_KEY);
+        const encryptedDisplayName = await aesEncrypt(displayname, AES_KEY);
+        const encryptedEmail = email ? await aesEncrypt(email, AES_KEY) : '';
+        
+        const response = await fetch('/infrared/rest/account/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: encryptedUsername,
+            password: encryptedPassword,
+            displayname: encryptedDisplayName,
+            email: encryptedEmail
+          })
+        });
+        
+        const data = await response.json();
+        if (data.status === 'Success') {
+          document.getElementById('registerSuccess').textContent = '注册成功！正在跳转...';
+          setTimeout(() => {
+            closeRegisterModal();
+            showLoggedInState(data.account);
+          }, 1500);
+        } else {
+          document.getElementById('registerError').textContent = 
+            data.errorCode || '注册失败，请检查输入信息';
+        }
+      } catch (err) {
+        document.getElementById('registerError').textContent = '注册请求失败，请稍后重试';
+      }
+    });
+
+    // 退出登录
+    function logout() {
+      fetch('/infrared/rest/account/logout')
+        .then(() => {
+          showGuestState();
+        })
+        .catch(() => {
+          showGuestState();
+        });
+    }
+
+    // 点击弹窗外部关闭
+    window.onclick = function(event) {
+      if (event.target.id === 'loginModal') {
+        closeLoginModal();
+      }
+      if (event.target.id === 'registerModal') {
+        closeRegisterModal();
+      }
+    }
+
+    // 页面加载时检查登录状态
+    checkLoginStatus();
+  </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ public enum LogActionEnum {
 
     LOGIN("Login"),
     LOGOUT("Logout"),
+    REGISTER("Register"),
     UPDATE_PASSWORD("Update password"),
     GET_LOG_LIST("Get log list"),
     GET_NC_LIST("Get NC list"),

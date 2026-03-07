@@ -10,6 +10,7 @@ import cn.ac.sitp.infrared.util.AESLoginUtil;
 import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.request.LoginRequest;
 import cn.ac.sitp.infrared.web.request.PasswordUpdateRequest;
+import cn.ac.sitp.infrared.web.request.RegisterRequest;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -129,6 +130,42 @@ public class AccountController {
             log.error("Unexpected password update error", e);
             logService.saveAccountAuditLog(ip, LogActionEnum.UPDATE_PASSWORD, Util.STATUS_FAILURE, new Date(),
                     currentUser.getUserid(), currentUser.getUsername(), stackTrace);
+            return Util.err(null, Util.GENERIC_ERROR_MESSAGE);
+        }
+    }
+
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
+    public Map<String, Object> register(@RequestBody(required = false) RegisterRequest requestBody) {
+        String ip = Util.getUserIpAddr(request);
+        RegisterRequest registerRequest = requestBody == null ? new RegisterRequest() : requestBody;
+        
+        String username = decodeCredential(registerRequest.getUsername());
+        String password = decodeCredential(registerRequest.getPassword());
+        String displayname = decodeCredential(registerRequest.getDisplayname());
+        String email = decodeCredential(registerRequest.getEmail());
+
+        if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+            return Util.err(null, "Illegal Params");
+        }
+
+        try {
+            AxrrAccount user = accountService.registerAccount(username, password, displayname, email);
+            logService.saveAccountAuditLog(ip, LogActionEnum.REGISTER, Util.STATUS_SUCCESS, new Date(),
+                    user.getUserid(), user.getDisplayname(), null);
+            
+            // Auto-login after registration
+            SessionAccountHelper.storeAccount(request, user);
+            Map<String, Object> contents = new HashMap<>();
+            contents.put("account", SessionAccountHelper.sanitize(user));
+            return Util.suc(contents);
+        } catch (AccountAuthenticationException e) {
+            log.warn("Registration failed for user {}", username, e);
+            logService.saveAccountAuditLog(ip, LogActionEnum.REGISTER, Util.STATUS_FAILURE, new Date(), null, username, e.getMessage());
+            return Util.err(null, e.getMessage());
+        } catch (Exception e) {
+            String stackTrace = Util.getStackTrace(e);
+            log.error("Unexpected registration error", e);
+            logService.saveAccountAuditLog(ip, LogActionEnum.REGISTER, Util.STATUS_FAILURE, new Date(), null, username, stackTrace);
             return Util.err(null, Util.GENERIC_ERROR_MESSAGE);
         }
     }
