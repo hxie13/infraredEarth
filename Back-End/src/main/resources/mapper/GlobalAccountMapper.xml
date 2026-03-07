@@ -134,8 +134,7 @@
             creationtime,
             updatetime,
             lock_status,
-            failure_count,
-            fk_role_no
+            failure_count
         ) VALUES (
             #{userid},
             #{username},
@@ -146,9 +145,13 @@
             now(),
             now(),
             'N',
-            0,
-            1
+            0
         )
+    </insert>
+
+    <insert id="insertUserGroupRole">
+        INSERT INTO t_control_user_group_role (fk_user_no, fk_group_no, fk_role_no)
+        VALUES (#{userNo}, 1, 1)
     </insert>
 
 </mapper>

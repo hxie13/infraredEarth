@@ -175,6 +175,9 @@ public class AccountServiceImpl implements AccountService {
         
         accountMapper.insertUser(user);
         
+        // Insert user-group-role association
+        accountMapper.insertUserGroupRole(user.getUserno());
+        
         // Return the created account
         return accountMapper.getUserByName(username);
     }

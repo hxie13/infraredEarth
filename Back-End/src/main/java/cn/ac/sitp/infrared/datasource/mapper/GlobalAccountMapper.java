@@ -29,4 +29,6 @@ public interface GlobalAccountMapper {
     int countUserByEmail(String email);
 
     void insertUser(AxrrUser user);
+
+    void insertUserGroupRole(@Param("userNo") long userNo);
 }
