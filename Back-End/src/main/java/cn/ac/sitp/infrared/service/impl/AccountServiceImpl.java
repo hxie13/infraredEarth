@@ -1,14 +1,18 @@
 package cn.ac.sitp.infrared.service.impl;
 
-import cn.ac.sitp.infrared.datasource.dao.*;
+import cn.ac.sitp.infrared.datasource.dao.AxrrAccount;
+import cn.ac.sitp.infrared.datasource.dao.AxrrPermission;
+import cn.ac.sitp.infrared.datasource.dao.AxrrRole;
+import cn.ac.sitp.infrared.datasource.dao.AxrrRolePermission;
+import cn.ac.sitp.infrared.datasource.dao.AxrrUser;
 import cn.ac.sitp.infrared.datasource.mapper.GlobalAccountMapper;
+import cn.ac.sitp.infrared.security.AccountAuthenticationException;
 import cn.ac.sitp.infrared.service.AccountService;
-import cn.ac.sitp.infrared.util.Util;
-import org.apache.shiro.authc.AuthenticationException;
+import cn.ac.sitp.infrared.service.PasswordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -21,73 +25,110 @@ import java.util.Map;
 public class AccountServiceImpl implements AccountService {
 
     @Value("${app.login.expiredday}")
-    long LOGIN_EXPIRED_DAYS;
+    private long loginExpiredDays;
+
     @Value("${app.login.maxfailurecount}")
-    int MAX_LOGIN_ATTEMPTS;
+    private int maxLoginAttempts;
+
     @Value("${app.login.lockminutes}")
-    long LOGIN_LOCK_MINUTES;
+    private long loginLockMinutes;
+
     @Autowired
     private GlobalAccountMapper accountMapper;
 
+    @Autowired
+    private PasswordService passwordService;
+
     @Override
-    public AxrrAccount loginAccount(String username, String password) throws AuthenticationException {
+    public AxrrAccount loginAccount(String username, String password) {
         ZoneId zoneId = ZoneId.systemDefault();
         AxrrAccount user = accountMapper.getUserByName(username);
         if (user == null) {
-            throw new AuthenticationException("用户不存在或用户已禁用");
+            throw new AccountAuthenticationException("Account does not exist or is disabled");
         }
-        LocalDateTime expiredTime = LocalDateTime.ofInstant(user.getExpiration_time().toInstant(), zoneId);
-        expiredTime = expiredTime.plusDays(LOGIN_EXPIRED_DAYS);
-        if (expiredTime.isBefore(LocalDateTime.now())) {
-            throw new AuthenticationException("您的密码已过期，请前往修改");
+
+        if (user.getExpiration_time() != null) {
+            LocalDateTime expiredTime = LocalDateTime.ofInstant(user.getExpiration_time().toInstant(), zoneId)
+                    .plusDays(loginExpiredDays);
+            if (expiredTime.isBefore(LocalDateTime.now())) {
+                throw new AccountAuthenticationException("Password has expired");
+            }
         }
-        if ("Y".equals(user.getLock_status())) {
-            LocalDateTime unlockTime = LocalDateTime.ofInstant(user.getLock_time().toInstant(), zoneId);
-            unlockTime = unlockTime.plusMinutes(LOGIN_LOCK_MINUTES);
+
+        if ("Y".equalsIgnoreCase(user.getLock_status()) && user.getLock_time() != null) {
+            LocalDateTime unlockTime = LocalDateTime.ofInstant(user.getLock_time().toInstant(), zoneId)
+                    .plusMinutes(loginLockMinutes);
             if (unlockTime.isBefore(LocalDateTime.now())) {
                 accountMapper.lockAccount(user.getUserid(), "N");
                 user.setFailure_count(0);
                 user.setLock_status("N");
             } else {
-                throw new AuthenticationException("用户账户已锁定，请于" + DateTimeFormatter.ofPattern(Util.FORMAT_LONG).format(unlockTime) + "后重试");
+                throw new AccountAuthenticationException("Account is locked until "
+                        + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(unlockTime));
             }
         }
-        if (user.getPassword().equals(password)) {
+
+        // Check password with migration support
+        boolean isLegacyMd5 = !passwordService.isBCryptHash(user.getPassword());
+        if (passwordService.verifyPassword(password, user.getPassword(), isLegacyMd5)) {
             accountMapper.resetFailureCount(user.getUserid());
+            // If using legacy MD5, upgrade to BCrypt
+            if (isLegacyMd5) {
+                upgradePasswordToBCrypt(user.getUserid(), password);
+            }
         } else {
             accountMapper.increaseFailureCount(user.getUserid());
-            int left = MAX_LOGIN_ATTEMPTS - user.getFailure_count() - 1;
+            int left = maxLoginAttempts - user.getFailure_count() - 1;
             if (left <= 0) {
                 accountMapper.lockAccount(user.getUserid(), "Y");
-                LocalDateTime unlockTime = LocalDateTime.now();
-                unlockTime = unlockTime.plusMinutes(LOGIN_LOCK_MINUTES);
-                throw new AuthenticationException("用户账户已锁定，请于" + DateTimeFormatter.ofPattern(Util.FORMAT_LONG).format(unlockTime) + "后重试");
-            } else {
-                throw new AuthenticationException("密码错误，您还有" + left + "次机会重试");
+                LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(loginLockMinutes);
+                throw new AccountAuthenticationException("Account is locked until "
+                        + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(unlockTime));
             }
+            throw new AccountAuthenticationException("Incorrect password, remaining attempts: " + left);
         }
         return user;
     }
 
+    /**
+     * Upgrade password hash from MD5 to BCrypt.
+     */
+    private void upgradePasswordToBCrypt(String userid, String rawPassword) {
+        try {
+            String newHash = passwordService.hashPassword(rawPassword);
+            AxrrUser user = new AxrrUser();
+            user.setUserid(userid);
+            user.setPassword(newHash);
+            accountMapper.updatePassword(user);
+        } catch (Exception e) {
+            // Log but don't fail login if upgrade fails
+            // This ensures users can still login even if upgrade fails
+        }
+    }
 
     @Override
-    public Map<String, Object> getRolePermission() throws Exception {
+    public Map<String, Object> getRolePermission() {
         Map<String, Object> contents = new HashMap<>();
-        List<AxrrRole> rolelist = accountMapper.getRoleList();
-        List<AxrrPermission> permissionlist = accountMapper.getPermissionList();
-        List<AxrrRolePermission> role_permission_list = accountMapper.getRolePermissionList();
-        contents.put("roles", rolelist);
-        contents.put("permissions", permissionlist);
-        contents.put("rolepermissions", role_permission_list);
+        List<AxrrRole> roleList = accountMapper.getRoleList();
+        List<AxrrPermission> permissionList = accountMapper.getPermissionList();
+        List<AxrrRolePermission> rolePermissionList = accountMapper.getRolePermissionList();
+        contents.put("roles", roleList);
+        contents.put("permissions", permissionList);
+        contents.put("rolepermissions", rolePermissionList);
         return contents;
     }
 
     @Override
-    public AxrrAccount updatePassword(String username, String oldPassword, String password) throws Exception {
-        AxrrAccount account = this.loginAccount(username, oldPassword);
+    @Transactional
+    public AxrrAccount updatePassword(String username, String oldPassword, String newPassword) throws Exception {
+        AxrrAccount account = loginAccount(username, oldPassword);
+        
+        // Hash new password with BCrypt
+        String hashedPassword = passwordService.hashPassword(newPassword);
+        
         AxrrUser user = new AxrrUser();
         user.setUserid(account.getUserid());
-        user.setPassword(password);
+        user.setPassword(hashedPassword);
         accountMapper.updatePassword(user);
         return account;
     }
