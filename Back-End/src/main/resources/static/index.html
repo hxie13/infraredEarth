@@ -40,10 +40,13 @@
         <button class="ghost-btn" onclick="openLoginModal()">登录</button>
         <button class="accent-btn" onclick="openRegisterModal()">注册</button>
       </div>
-      <!-- 已登录状态 (默认隐藏) -->
-      <div id="loggedInActions" style="display: none;">
-        <span id="userDisplayName" style="color: #fff; margin-right: 10px;"></span>
-        <button class="ghost-btn" onclick="logout()">退出</button>
+      <!-- 已登录状态 (默认隐藽) -->
+      <div id="loggedInActions" class="user-info-container" style="display: none;">
+        <div class="user-avatar">
+          <span id="userAvatarText"></span>
+        </div>
+        <span id="userDisplayName" class="user-display-name"></span>
+        <button class="ghost-btn logout-btn" onclick="logout()">退出</button>
       </div>
     </div>
   </header>
@@ -670,6 +673,81 @@
       font-weight: 500;
       color: #60a5fa;
     }
+
+    /* 用户信息容器 - 登录后状态 */
+    .user-info-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 6px 6px 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(140, 165, 255, 0.18);
+      border-radius: 999px;
+      transition: all 0.2s ease;
+    }
+
+    .user-info-container:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(140, 165, 255, 0.3);
+    }
+
+    /* 用户头像 */
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #165dff, #7e4dff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(22, 93, 255, 0.35);
+      flex-shrink: 0;
+    }
+
+    /* 用户显示名称 */
+    .user-display-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 退出按钮 */
+    .logout-btn {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      margin-left: 4px;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 960px) {
+      .user-info-container {
+        padding: 4px 4px 4px 12px;
+        gap: 8px;
+      }
+
+      .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+      }
+
+      .user-display-name {
+        max-width: 80px;
+        font-size: 0.85rem;
+      }
+
+      .logout-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+    }
   </style>
 
   <script src="./js/home-portal.js" defer></script>
@@ -695,7 +773,10 @@
     function showLoggedInState(account) {
       document.getElementById('guestActions').style.display = 'none';
       document.getElementById('loggedInActions').style.display = 'flex';
-      document.getElementById('userDisplayName').textContent = account.displayname || account.username;
+      const displayName = account.displayname || account.username;
+      document.getElementById('userDisplayName').textContent = displayName;
+      // 设置头像文字为显示名称的首字母
+      document.getElementById('userAvatarText').textContent = displayName.charAt(0).toUpperCase();
     }
 
     // 显示游客状态
