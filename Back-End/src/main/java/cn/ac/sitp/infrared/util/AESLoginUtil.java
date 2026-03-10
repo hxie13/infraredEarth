@@ -123,25 +123,4 @@ public class AESLoginUtil {
         return Base64.getEncoder().encodeToString(keyBytes);
     }
 
-    // Legacy key constant for backward compatibility during migration
-    // This should be used only for decrypting old data
-    public static final String KEY = DEFAULT_KEY;
-
-    public static void main(String[] args) {
-        try {
-            // Test encryption/decryption
-            String testData = "testPassword123";
-            String encrypted = aesEncryptString(testData, null);
-            System.out.println("Encrypted: " + encrypted);
-            String decrypted = aesDecryptString(encrypted, null);
-            System.out.println("Decrypted: " + decrypted);
-            System.out.println("Match: " + testData.equals(decrypted));
-            
-            // Generate a new key example
-            System.out.println("\nExample of generating a new 128-bit key: ");
-            System.out.println(generateKey(128));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

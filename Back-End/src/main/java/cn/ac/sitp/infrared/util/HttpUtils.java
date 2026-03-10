@@ -4,21 +4,22 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 
 public class HttpUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(HttpUtils.class);
     private static final HttpClient client = HttpClientBuilder.create().build();
-    private final static String USER_AGENT = "Mozilla/5.0";
-    private final static HostnameVerifier DO_NOT_VERIFY = (hostname, session) -> true;
+    private static final String USER_AGENT = "Mozilla/5.0";
 
     public static String sendHttpsGET(String url, Map<String, Object> params) {
         if (params != null) {
@@ -35,83 +36,36 @@ public class HttpUtils {
             url = urlBuilder.toString();
         }
 
-        System.out.println(url);
+        log.debug("Sending HTTPS GET: {}", url);
 
         StringBuilder result = new StringBuilder();
-        PrintWriter out = null;
         BufferedReader in = null;
-        HttpURLConnection conn;
         try {
-            trustAllHosts();
             URL realUrl = new URI(url).toURL();
-            // 通过请求地址判断请求类型(http或者是https)
-            if (realUrl.getProtocol().equalsIgnoreCase("https")) {
-                HttpsURLConnection https = (HttpsURLConnection) realUrl.openConnection();
-                https.setHostnameVerifier(DO_NOT_VERIFY);
-                conn = https;
-            } else {
-                conn = (HttpURLConnection) realUrl.openConnection();
-            }
-            // 设置通用的请求属性
+            HttpURLConnection conn = (HttpURLConnection) realUrl.openConnection();
             conn.setRequestProperty("accept", "*/*");
             conn.setRequestProperty("connection", "Keep-Alive");
-            conn.setRequestProperty("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+            conn.setRequestProperty("user-agent", USER_AGENT);
             conn.setRequestProperty("Content-Type", "text/plain;charset=utf-8");
-            // 发送POST请求必须设置如下两行
             conn.setDoOutput(false);
             conn.setDoInput(true);
-            // 获取URLConnection对象对应的输出流
-//			out = new PrintWriter(conn.getOutputStream());
-            // 发送请求参数
-            // out.print(a);
-            // flush输出流的缓冲
-//			out.flush();
-            // 定义BufferedReader输入流来读取URL的响应
             in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String line;
             while ((line = in.readLine()) != null) {
                 result.append(line);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {// 使用finally块来关闭输出流、输入流
+            log.error("Failed to send HTTPS GET request to {}", url, e);
+        } finally {
             try {
                 if (in != null) {
                     in.close();
                 }
             } catch (IOException ex) {
-                ex.printStackTrace();
+                log.error("Failed to close input stream", ex);
             }
         }
         return result.toString();
-    }
-
-    private static void trustAllHosts() {
-        // Create a trust manager that does not validate certificate chains
-        // Android use X509 cert
-        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                return new java.security.cert.X509Certificate[]{};
-            }
-
-            public void checkClientTrusted(X509Certificate[] chain,
-                                           String authType) {
-            }
-
-            public void checkServerTrusted(X509Certificate[] chain,
-                                           String authType) {
-            }
-        }};
-
-        // Install the all-trusting trust manager
-        try {
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection
-                    .setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public static String sendHttpGetRequest(String url, Map<String, Object> params) {
@@ -130,12 +84,11 @@ public class HttpUtils {
         }
         HttpGet request = new HttpGet(url);
 
-        // add request header
         request.addHeader("User-Agent", USER_AGENT);
         ClassicHttpResponse response;
         try {
             response = (ClassicHttpResponse) client.execute(request);
-            System.out.println("Response Code : " + response.getCode());
+            log.debug("Response Code: {}", response.getCode());
 
             BufferedReader rd = new BufferedReader(new InputStreamReader(
                     response.getEntity().getContent()));
@@ -147,7 +100,7 @@ public class HttpUtils {
             }
             return result.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to send HTTP GET request to {}", url, e);
         }
         return null;
     }
@@ -159,17 +112,15 @@ public class HttpUtils {
             sb.append(urlAddress);
             for (Map.Entry<String, Object> entry : params.entrySet()) {
                 if (first) {
-                    //urlAddress+="?"+entry.getKey()+"="+entry.getValue();
                     sb.append("?").append(entry.getKey()).append("=").append(entry.getValue());
                     first = false;
                 } else {
-                    //urlAddress+="&&"+entry.getKey()+"="+entry.getValue();
                     sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
                 }
             }
             urlAddress = sb.toString();
         }
-        System.out.println(urlAddress);
+        log.debug("Sending request: {}", urlAddress);
         try {
             URL url = new URI(urlAddress).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -186,40 +137,24 @@ public class HttpUtils {
             }
             return result.toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to send request to {}", urlAddress, e);
         }
         return "ERROR";
     }
 
     public static String sendHttpPost(String url, String jsonStr) throws Exception {
-
-        trustAllHosts();
         URL realUrl = new URI(url).toURL();
-
-        HttpURLConnection conn;
-        if (realUrl.getProtocol().equalsIgnoreCase("https")) {
-            HttpsURLConnection https = (HttpsURLConnection) realUrl.openConnection();
-            https.setHostnameVerifier(DO_NOT_VERIFY);
-            conn = https;
-        } else {
-            conn = (HttpURLConnection) realUrl.openConnection();
-        }
+        HttpURLConnection conn = (HttpURLConnection) realUrl.openConnection();
 
         conn.setRequestMethod("POST");
-
         conn.setDoOutput(true);
-
         conn.setAllowUserInteraction(false);
-
         conn.setRequestProperty("Content-type", "application/json;charset=UTF-8");
-
         conn.setConnectTimeout(10000);
         conn.setReadTimeout(300000);
 
         PrintStream ps = new PrintStream(conn.getOutputStream());
-
         ps.print(jsonStr);
-
         ps.close();
 
         BufferedReader bReader = new BufferedReader(new InputStreamReader(conn.getInputStream()));

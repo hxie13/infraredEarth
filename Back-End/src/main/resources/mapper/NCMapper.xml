@@ -17,15 +17,15 @@
             nc.start_time, nc.end_time, nc.geometry
             from nc
             <where> 1=1
-                <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%'</if>
-                <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%'</if>
+                <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%' ESCAPE '\'</if>
+                <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%' ESCAPE '\'</if>
                 <if test="band_number != null">and nc.band_number = #{band_number}</if>
                 <if test="region_name != null and region_name != ''">
                     and exists (
                         select 1
                         from china c_filter
                         where ST_Contains(nc.geometry, c_filter.geometry)
-                          and c_filter.name like '%' || #{region_name} || '%'
+                          and c_filter.name like '%' || #{region_name} || '%' ESCAPE '\'
                     )
                 </if>
                 <if test="satellite_type != null and satellite_type != ''">and nc.satellite_type = #{satellite_type}</if>
@@ -85,15 +85,15 @@
         select count(*)
         from nc
         <where> 1=1
-            <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%'</if>
-            <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%'</if>
+            <if test="name != null and name != ''">and nc.name like '%' || #{name} || '%' ESCAPE '\'</if>
+            <if test="title != null and title != ''">and nc.title like '%' || #{title} || '%' ESCAPE '\'</if>
             <if test="band_number != null">and nc.band_number = #{band_number}</if>
             <if test="region_name != null and region_name != ''">
                 and exists (
                     select 1
                     from china c_filter
                     where ST_Contains(nc.geometry, c_filter.geometry)
-                      and c_filter.name like '%' || #{region_name} || '%'
+                      and c_filter.name like '%' || #{region_name} || '%' ESCAPE '\'
                 )
             </if>
             <if test="satellite_type != null and satellite_type != ''">and nc.satellite_type = #{satellite_type}</if>

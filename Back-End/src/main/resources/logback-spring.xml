@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="false">
-    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
-    <property name="LOG_HOME" value="/infrared/logs"/>
+    <!--定义日志文件的存储地址-->
+    <property name="LOG_HOME" value="${LOG_PATH:-logs}"/>
     <property name="FILE_NAME" value="infrared"/>
     <!-- 控制台输出 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -16,7 +16,7 @@
             <!-- 滚动后的日志文件命名模式 -->
             <fileNamePattern>${LOG_HOME}/${FILE_NAME}.log_%d{yyyy-MM-dd}-%i</fileNamePattern>
             <!-- 日志文件的最大大小 -->
-            <maxFileSize>1MB</maxFileSize>
+            <maxFileSize>10MB</maxFileSize>
             <!-- 最大保留30天的日志 -->
             <maxHistory>30</maxHistory>
             <!-- 总日志文件大小不超过3GB -->
@@ -27,12 +27,6 @@
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
         </encoder>
     </appender>
-    <!-- show parameters for hibernate sql 专为 Hibernate 定制 -->
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
-    <logger name="org.hibernate.type.descriptor.sql.BasicExtractor" level="DEBUG"/>
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
-    <logger name="org.hibernate.engine.QueryParameters" level="DEBUG"/>
-    <logger name="org.hibernate.engine.query.HQLQueryPlan" level="DEBUG"/>
 
     <!--myibatis log configure-->
     <logger name="com.apache.ibatis" level="TRACE"/>

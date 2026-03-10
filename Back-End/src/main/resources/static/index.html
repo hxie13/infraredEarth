@@ -203,62 +203,59 @@
       </div>
     </section>
 
-    <section id="about-platform" class="section-block glass-card">
-      <div class="section-heading">
-        <div>
-          <span class="section-kicker">About Infrared Earth</span>
-          <h2>关于红外地球平台</h2>
-        </div>
-        <p>补齐旧主页的核心平台介绍，并用更清晰的两栏叙事方式融入新的门户视觉语言。</p>
-      </div>
-
-      <div class="about-grid">
-        <div class="about-copy">
-          <p class="lead-text">
-            红外地球是一个专注于红外极端事件演化与分析的平台，通过尺度分离与重整化群理论，
-            将数字孪生地球从当前的离散重构发展为无尺度重构。
+    <section id="about-platform" class="destine-hero-section">
+      <div class="destine-hero-inner">
+        <div class="destine-hero-text">
+          <h2 class="destine-hero-title">
+            欢迎来到 <span class="destine-highlight">红外地球</span>
+          </h2>
+          <p class="destine-hero-lead">
+            <strong>
+              红外地球致力于构建面向多尺度数字地球的红外极端事件演化与分析平台。
+              系统将持续演进，为用户提供更丰富的服务、工具与应用，以应对地球灾害监测的迫切需求。
+            </strong>
           </p>
-          <div class="paper-card highlight-card">
-            <p>
-              变革观测范式，致力于洞察地球极端灾害本质。构建双向多尺度耦合框架，刻画复杂系统级联效应。
-              以偏微分方程约束的高性能计算、新型计算架构打造全球领先的灾害风险模拟器。
-            </p>
-          </div>
-          <div class="about-pillars">
-            <article class="glass-subcard">
-              <strong>多尺度理论</strong>
-              <span>以尺度分离与重整化思路统筹灾害演化建模。</span>
-            </article>
-            <article class="glass-subcard">
-              <strong>高性能计算</strong>
-              <span>面向复杂系统级联效应的约束计算与产品生成。</span>
-            </article>
-            <article class="glass-subcard">
-              <strong>业务闭环</strong>
-              <span>从数据搜索到模型处理，再到案例研判的一体化门户入口。</span>
-            </article>
+          <p class="destine-hero-desc">
+            我们诚邀您注册并免费使用平台的核心功能，包括<span class="destine-link-text">影像数据检索</span>、
+            <span class="destine-link-text">模型处理与分析</span>以及<span class="destine-link-text">经典案例研判</span>等多项能力。
+            这些功能涵盖数据获取、处理、可视化以及行业分析服务。
+            通过使用并提供反馈，您将支持红外地球团队不断改进系统，使其更好地服务于科研与应用需求。
+          </p>
+          <p class="destine-hero-desc">
+            平台通过尺度分离与重整化群理论，将数字孪生地球从离散重构发展为无尺度重构，
+            构建双向多尺度耦合框架，刻画复杂系统级联效应，以偏微分方程约束的高性能计算打造全球领先的灾害风险模拟器。
+          </p>
+          <p class="destine-hero-desc destine-hero-sub">
+            <em>持续关注红外地球的演进，见证多尺度数字地球从理论走向大规模应用，
+            释放数字孪生地球的全部潜能。</em>
+          </p>
+          <div class="destine-hero-actions">
+            <a class="destine-btn-primary" href="deepseek_html_数据搜索_v1.html">
+              <span class="destine-btn-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+              </span>
+              探索红外地球
+            </a>
+            <a class="destine-btn-outline" href="#modules">
+              了解多尺度数字孪生数据
+            </a>
           </div>
         </div>
-
-        <figure class="about-media paper-card">
-          <div class="media-frame">
-            <video
-              id="platformVideo"
-              class="platform-video"
-              src="img/KW_GGL_EFM_Hero_uDDpA0T.mp4"
-              poster="img/数据中心.png"
-              autoplay
-              muted
-              loop
-              playsinline
-              preload="metadata"
-            ></video>
-          </div>
-          <figcaption>
-            <strong>平台概念演示</strong>
-            <span id="videoStatus">视频将自动循环播放；若浏览器阻止自动播放，将显示静态占位图。</span>
-          </figcaption>
-        </figure>
+        <div class="destine-hero-media">
+          <div class="destine-earth-glow"></div>
+          <video
+            id="platformVideo"
+            class="destine-earth-video"
+            src="img/KW_GGL_EFM_Hero_uDDpA0T.mp4"
+            poster="img/数据中心.png"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+          ></video>
+          <span id="videoStatus" class="sr-only">视频将自动循环播放</span>
+        </div>
       </div>
     </section>
 
@@ -531,7 +528,8 @@
         </div>
         <div class="auth-form-group">
           <label>密码 <span class="auth-required">*</span></label>
-          <input type="password" id="registerPassword" name="password" placeholder="至少6位字符" required minlength="6">
+          <input type="password" id="registerPassword" name="password" placeholder="8位以上，含大小写字母、数字和特殊字符" required minlength="8">
+          <div id="passwordHint" class="auth-hint" style="font-size:12px;color:#999;margin-top:4px;"></div>
         </div>
         <div class="auth-form-group">
           <label>显示名称 <span class="auth-required">*</span></label>
@@ -872,6 +870,34 @@
       }
     });
 
+    // 密码强度校验（与后端 PasswordValidator 保持一致）
+    function validatePassword(password, username) {
+      if (!password || password.length < 8) return '密码长度至少8位';
+      if (!/[A-Z]/.test(password)) return '密码需包含至少一个大写字母';
+      if (!/[a-z]/.test(password)) return '密码需包含至少一个小写字母';
+      if (!/\d/.test(password)) return '密码需包含至少一个数字';
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return '密码需包含至少一个特殊字符';
+      if (username && password.toLowerCase() === username.toLowerCase()) return '密码不能与用户名相同';
+      return null;
+    }
+
+    // 密码输入实时提示
+    document.getElementById('registerPassword').addEventListener('input', function() {
+      const hint = document.getElementById('passwordHint');
+      const password = this.value;
+      const username = document.getElementById('registerUsername').value.trim();
+      const error = validatePassword(password, username);
+      if (password.length === 0) {
+        hint.textContent = '';
+      } else if (error) {
+        hint.textContent = error;
+        hint.style.color = '#e74c3c';
+      } else {
+        hint.textContent = '密码强度符合要求';
+        hint.style.color = '#27ae60';
+      }
+    });
+
     // 注册表单提交
     document.getElementById('registerForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -879,9 +905,16 @@
       const password = document.getElementById('registerPassword').value;
       const displayname = document.getElementById('registerDisplayName').value.trim();
       const email = document.getElementById('registerEmail').value.trim();
-      
+
       document.getElementById('registerError').textContent = '';
       document.getElementById('registerSuccess').textContent = '';
+
+      // 客户端密码强度预校验
+      const passwordError = validatePassword(password, username);
+      if (passwordError) {
+        document.getElementById('registerError').textContent = passwordError;
+        return;
+      }
       
       try {
         const encryptedUsername = await aesEncrypt(username, AES_KEY);

@@ -9,6 +9,9 @@ import cn.ac.sitp.infrared.datasource.mapper.GlobalAccountMapper;
 import cn.ac.sitp.infrared.security.AccountAuthenticationException;
 import cn.ac.sitp.infrared.service.AccountService;
 import cn.ac.sitp.infrared.service.PasswordService;
+import cn.ac.sitp.infrared.util.PasswordValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,8 @@ import java.util.Map;
 
 @Service
 public class AccountServiceImpl implements AccountService {
+
+    private static final Logger log = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     @Value("${app.login.expiredday}")
     private long loginExpiredDays;
@@ -40,6 +45,7 @@ public class AccountServiceImpl implements AccountService {
     private PasswordService passwordService;
 
     @Override
+    @Transactional
     public AxrrAccount loginAccount(String username, String password) {
         ZoneId zoneId = ZoneId.systemDefault();
         AxrrAccount user = accountMapper.getUserByName(username);
@@ -101,8 +107,7 @@ public class AccountServiceImpl implements AccountService {
             user.setPassword(newHash);
             accountMapper.updatePassword(user);
         } catch (Exception e) {
-            // Log but don't fail login if upgrade fails
-            // This ensures users can still login even if upgrade fails
+            log.warn("Failed to upgrade password hash for user {}", userid, e);
         }
     }
 
@@ -121,8 +126,12 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AxrrAccount updatePassword(String username, String oldPassword, String newPassword) throws Exception {
+        String passwordError = PasswordValidator.validate(newPassword, username);
+        if (passwordError != null) {
+            throw new AccountAuthenticationException(passwordError);
+        }
         AxrrAccount account = loginAccount(username, oldPassword);
-        
+
         // Hash new password with BCrypt
         String hashedPassword = passwordService.hashPassword(newPassword);
         
@@ -140,8 +149,9 @@ public class AccountServiceImpl implements AccountService {
         if (username == null || username.trim().isEmpty()) {
             throw new AccountAuthenticationException("Username is required");
         }
-        if (password == null || password.length() < 6) {
-            throw new AccountAuthenticationException("Password must be at least 6 characters");
+        String passwordError = PasswordValidator.validate(password, username);
+        if (passwordError != null) {
+            throw new AccountAuthenticationException(passwordError);
         }
         if (displayname == null || displayname.trim().isEmpty()) {
             throw new AccountAuthenticationException("Display name is required");

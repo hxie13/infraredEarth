@@ -2,6 +2,8 @@ package cn.ac.sitp.infrared.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -13,13 +15,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class Util {
+
+    private static final Logger log = LoggerFactory.getLogger(Util.class);
 
     public static final String STATUS_SUCCESS = "SUCCESS";
     public static final String STATUS_FAILURE = "FAILURE";
@@ -32,16 +34,6 @@ public class Util {
     private static final String RESPONSE_RESULT_FAILURE = "Failure";
     private static final String RESPONSE_RESULT_LOGGED_OUT = "Logged_out";
     public static final String GENERIC_ERROR_MESSAGE = "Internal server error";
-    private static ExecutorService fixedThreadPool;
-
-    public static ExecutorService getThreadPool() {
-        if (fixedThreadPool == null) {
-            fixedThreadPool = Executors.newFixedThreadPool(10);
-            return fixedThreadPool;
-        } else {
-            return fixedThreadPool;
-        }
-    }
 
     public static Map<String, Object> noLogin() {
         Map<String, Object> contents = new HashMap<>();
@@ -169,7 +161,7 @@ public class Util {
             try {
                 return new String(Base64.encodeBase64(str.getBytes("utf-8")));
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                log.error("Failed to encode base64", e);
                 return new String(Base64.encodeBase64(str.getBytes()));
             }
         }
@@ -182,7 +174,7 @@ public class Util {
             try {
                 return new String(Base64.decodeBase64(str.getBytes()), "utf-8");
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                log.error("Failed to decode base64", e);
                 return new String(Base64.decodeBase64(str.getBytes()));
             }
         }
@@ -198,7 +190,7 @@ public class Util {
             InetAddress ia = InetAddress.getLocalHost();
             return ia.getHostAddress();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to get local IP", e);
         }
         return null;
     }
@@ -216,18 +208,16 @@ public class Util {
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
-            // 从本地访问时根据网卡取本机配置的IP
             if (ip.equals("127.0.0.1") || ip.equals("0:0:0:0:0:0:0:1")) {
                 InetAddress inetAddress = null;
                 try {
                     inetAddress = InetAddress.getLocalHost();
                 } catch (UnknownHostException e) {
-                    e.printStackTrace();
+                    log.error("Failed to resolve local host", e);
                 }
                 ip = inetAddress.getHostAddress();
             }
         }
-        // 通过多个代理转发的情况，第一个IP为客户端真实IP，多个IP会按照','分割
         if (ip != null && ip.length() > 15) {
             if (ip.indexOf(",") > 0) {
                 ip = ip.substring(0, ip.indexOf(","));
@@ -237,7 +227,6 @@ public class Util {
     }
 
     public static File transferToFile(MultipartFile multipartFile) {
-//        选择用缓冲区来实现这个转换即使用java 创建的临时文件 使用 MultipartFile.transferto()方法 。
         File file = null;
         try {
             String originalFilename = multipartFile.getOriginalFilename();
@@ -246,7 +235,7 @@ public class Util {
             multipartFile.transferTo(file);
             file.deleteOnExit();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to transfer multipart file", e);
         }
         return file;
     }
@@ -277,35 +266,14 @@ public class Util {
         return numberArray;
     }
 
-//    public static String toPinyin(String chinese) throws BadHanyuPinyinOutputFormatCombination {
-//        HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
-//        format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
-//        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-//
-//        StringBuilder pinyinBuilder = new StringBuilder();
-//        char[] chars = chinese.toCharArray();
-//        for (char c : chars) {
-//            String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(c, format);
-//            if (pinyinArray != null) {
-//                pinyinBuilder.append(pinyinArray[0]);
-//            } else {
-//                pinyinBuilder.append(c);
-//            }
-//        }
-//        return pinyinBuilder.toString();
-//    }
-
     public static boolean genderEqual(String risGender, String dicomGender) {
         return (Arrays.asList("男", "M").contains(risGender)) && (Arrays.asList("男", "M").contains(dicomGender))
                 || (Arrays.asList("女", "F").contains(risGender)) && (Arrays.asList("女", "F").contains(dicomGender))
                 || (Arrays.asList("未知", "O").contains(risGender)) && (Arrays.asList("未知", "O").contains(dicomGender));
     }
 
-    public static void main(String[] args) {
-        String month = "2023-02";
-        String startDate = Util.dateToStringLong(DateUtil.addMonths(Util.strToDate(month + "-01", Util.FORMAT_SHORT), -3), Util.FORMAT_SHORT);
-        System.out.println(startDate);
+    public static String escapeLikePattern(String input) {
+        if (input == null) return null;
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
-
-
 }

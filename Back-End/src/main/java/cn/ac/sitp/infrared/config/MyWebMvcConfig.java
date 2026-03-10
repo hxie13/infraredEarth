@@ -1,5 +1,6 @@
 package cn.ac.sitp.infrared.config;
 
+import cn.ac.sitp.infrared.security.CsrfTokenInterceptor;
 import cn.ac.sitp.infrared.security.SessionAuthInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +14,11 @@ import java.nio.file.Path;
 public class MyWebMvcConfig implements WebMvcConfigurer {
 
     private final SessionAuthInterceptor sessionAuthInterceptor;
+    private final CsrfTokenInterceptor csrfTokenInterceptor;
 
-    public MyWebMvcConfig(SessionAuthInterceptor sessionAuthInterceptor) {
+    public MyWebMvcConfig(SessionAuthInterceptor sessionAuthInterceptor, CsrfTokenInterceptor csrfTokenInterceptor) {
         this.sessionAuthInterceptor = sessionAuthInterceptor;
+        this.csrfTokenInterceptor = csrfTokenInterceptor;
     }
 
     @Value("${accessFile.enabled:false}")
@@ -38,6 +41,9 @@ public class MyWebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(csrfTokenInterceptor)
+                .addPathPatterns("/rest/**");
+
         registry.addInterceptor(sessionAuthInterceptor)
                 .addPathPatterns(
                         "/rest/log/**",

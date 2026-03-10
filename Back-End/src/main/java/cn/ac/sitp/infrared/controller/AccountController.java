@@ -175,9 +175,10 @@ public class AccountController {
             return value;
         }
         try {
-            return AESLoginUtil.aesDecryptString(value, AESLoginUtil.KEY);
-        } catch (Exception ignored) {
-            return value;
+            return AESLoginUtil.aesDecryptString(value, null);
+        } catch (Exception e) {
+            log.warn("Failed to decrypt credential, rejecting request", e);
+            throw new AccountAuthenticationException("Invalid credentials format");
         }
     }
 }

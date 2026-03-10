@@ -41,7 +41,7 @@
         nd.no_affected as noAffected,
         nd.no_homeless as noHomeless,
         nd.total_affected as totalAffected,
-        nd.resonctruction_costs as reconstructionCosts,
+        nd.reconstruction_costs as reconstructionCosts,
         nd.reconstruction_costs_adjusted as reconstructionCostsAdjusted,
         nd.insured_damage as insuredDamage,
         nd.insured_damage_adjusted as insuredDamageAdjusted,
@@ -59,13 +59,13 @@
             nd.longitude is not null
             and nd.latitude is not null
             <if test="country != null and country != ''">
-                and nd.country like '%' || #{country} || '%'
+                and nd.country like '%' || #{country} || '%' ESCAPE '\'
             </if>
             <if test="place != null and place != ''">
-                and nd.location like '%' || #{place} || '%'
+                and nd.location like '%' || #{place} || '%' ESCAPE '\'
             </if>
             <if test="type != null and type != ''">
-                and nd.disaster_type like '%' || #{type} || '%'
+                and nd.disaster_type like '%' || #{type} || '%' ESCAPE '\'
             </if>
             <if test="begin_date != null">
                 and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp &gt;= #{begin_date}
@@ -85,13 +85,13 @@
             nd.longitude is not null
             and nd.latitude is not null
             <if test="country != null and country != ''">
-                and nd.country like '%' || #{country} || '%'
+                and nd.country like '%' || #{country} || '%' ESCAPE '\'
             </if>
             <if test="place != null and place != ''">
-                and nd.location like '%' || #{place} || '%'
+                and nd.location like '%' || #{place} || '%' ESCAPE '\'
             </if>
             <if test="type != null and type != ''">
-                and nd.disaster_type like '%' || #{type} || '%'
+                and nd.disaster_type like '%' || #{type} || '%' ESCAPE '\'
             </if>
             <if test="begin_date != null">
                 and (nd.start_year || '-' || LPAD(nd.start_month::text, 2, '0') || '-' || LPAD(nd.start_day::text, 2, '0') || ' 00:00:00')::timestamp &gt;= #{begin_date}
