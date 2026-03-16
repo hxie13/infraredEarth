@@ -6,9 +6,9 @@ import cn.ac.sitp.infrared.datasource.mapper.NCMapper;
 import cn.ac.sitp.infrared.service.NCService;
 import cn.ac.sitp.infrared.service.StoredFileResolver;
 import cn.ac.sitp.infrared.util.Util;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,20 +16,21 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
+@RequiredArgsConstructor
 public class NCServiceImpl implements NCService {
-    private static final Log LOG = LogFactory.getLog(NCServiceImpl.class);
 
-    @Autowired
-    private NCMapper ncMapper;
+    private static final Logger log = LoggerFactory.getLogger(NCServiceImpl.class);
+    private static final long TYPE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-    @Autowired
-    private StoredFileResolver storedFileResolver;
+    private final NCMapper ncMapper;
+    private final StoredFileResolver storedFileResolver;
+
+    // Lightweight cache for slowly-changing type lists
+    private final AtomicReference<CachedTypeLists> typeCacheRef = new AtomicReference<>();
 
     @Override
     public Map<String, Object> getNCList(int currPage, int pageSize, String name, String title, Integer bandNumber,
@@ -41,26 +42,22 @@ public class NCServiceImpl implements NCService {
         contents.put("ncList", ncList);
         Util.buildPageModel(pageSize, ncMapper.selectNCCount(name, title, bandNumber, regionName, satelliteType,
                 resolution, imgType, processType, beginDate, endDate), contents);
-        contents.put("satelliteTypeList", ncMapper.selectNCSatelliteTypeList());
-        contents.put("imgTypeList", ncMapper.selectNCImgTypeList());
-        contents.put("processTypeList", ncMapper.selectNCProcessTypeList());
+        // Use cached type lists instead of 3 separate queries per request
+        appendTypeLists(contents);
         return contents;
     }
 
     @Override
     @Transactional
-    public void addDataset(List<Long> ncIdList, AxrrAccount user) {
+    public Long addDataset(List<Long> ncIdList, AxrrAccount user) {
         Long dataSetId = ncMapper.insertDataSet(user.getUserno());
         ncMapper.insertDataSetNc(dataSetId, ncIdList);
+        return dataSetId;
     }
 
     @Override
     public InputStream getNcFileStream(Long id) throws Exception {
-        String imgPath = ncMapper.getImgPathById(id);
-        if (imgPath == null || imgPath.isEmpty()) {
-            throw new FileNotFoundException("NC file not found for ID: " + id);
-        }
-
+        // Reuse getNcFilePath to avoid duplicate getImgPathById query
         return Files.newInputStream(getNcFilePath(id));
     }
 
@@ -70,16 +67,36 @@ public class NCServiceImpl implements NCService {
         if (imgPath == null || imgPath.isEmpty()) {
             throw new FileNotFoundException("NC file not found for ID: " + id);
         }
-
         return storedFileResolver.resolveExistingFile(imgPath);
     }
 
     @Override
     public Map<String, Object> getNCTypeList() {
         Map<String, Object> contents = new HashMap<>();
-        contents.put("satelliteTypeList", ncMapper.selectNCSatelliteTypeList());
-        contents.put("imgTypeList", ncMapper.selectNCImgTypeList());
-        contents.put("processTypeList", ncMapper.selectNCProcessTypeList());
+        appendTypeLists(contents);
         return contents;
+    }
+
+    private void appendTypeLists(Map<String, Object> contents) {
+        CachedTypeLists cached = typeCacheRef.get();
+        if (cached == null || cached.isExpired()) {
+            cached = new CachedTypeLists(
+                    ncMapper.selectNCSatelliteTypeList(),
+                    ncMapper.selectNCImgTypeList(),
+                    ncMapper.selectNCProcessTypeList(),
+                    System.currentTimeMillis()
+            );
+            typeCacheRef.set(cached);
+        }
+        contents.put("satelliteTypeList", cached.satelliteTypes);
+        contents.put("imgTypeList", cached.imgTypes);
+        contents.put("processTypeList", cached.processTypes);
+    }
+
+    private record CachedTypeLists(List<String> satelliteTypes, List<String> imgTypes,
+                                   List<String> processTypes, long createdAt) {
+        boolean isExpired() {
+            return System.currentTimeMillis() - createdAt > TYPE_CACHE_TTL_MS;
+        }
     }
 }

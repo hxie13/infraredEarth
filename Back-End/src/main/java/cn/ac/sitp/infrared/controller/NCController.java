@@ -8,12 +8,10 @@ import cn.ac.sitp.infrared.service.NCService;
 import cn.ac.sitp.infrared.util.RequestValueUtils;
 import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.GlobalExceptionHandler;
-import com.alibaba.fastjson2.JSONObject;
 import cn.ac.sitp.infrared.web.request.AddDatasetRequest;
 import cn.ac.sitp.infrared.web.request.NcListRequest;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
@@ -31,24 +29,21 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/rest/nc")
+@RequiredArgsConstructor
 public class NCController {
 
-    @Resource
-    private HttpServletRequest request;
-
-    @Autowired
-    private AuditLogService logService;
-
-    @Autowired
-    private NCService ncService;
+    private final HttpServletRequest request;
+    private final AuditLogService logService;
+    private final NCService ncService;
 
     @RequestMapping(value = "/getType", method = RequestMethod.POST)
-    public Map<String, Object> getDisasterTypeList(@RequestBody JSONObject obj) {
+    public Map<String, Object> getDisasterTypeList(@RequestBody Object obj) {
         String ip = Util.getUserIpAddr(request);
         AxrrAccount user = SessionAccountHelper.currentAccount(request);
         String description = LogActionEnum.GET_NC_TYPE_LIST.getDescription() + " " + obj;
@@ -135,8 +130,10 @@ public class NCController {
         GlobalExceptionHandler.setAuditContext(request, LogActionEnum.ADD_DATASET, description);
 
         List<Long> ncIdList = RequestValueUtils.parsePositiveLongList(addDatasetRequest.getNcIds());
-        ncService.addDataset(ncIdList, user);
+        Long dataSetId = ncService.addDataset(ncIdList, user);
         logService.saveAuditLog(ip, LogActionEnum.ADD_DATASET, Util.STATUS_SUCCESS, new Date(), null, description, user);
-        return Util.suc(null);
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("dataSetId", dataSetId);
+        return Util.suc(contents);
     }
 }

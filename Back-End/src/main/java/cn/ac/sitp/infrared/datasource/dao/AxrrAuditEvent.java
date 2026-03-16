@@ -11,9 +11,6 @@ import java.util.Date;
 @Getter
 public class AxrrAuditEvent implements Serializable {
 
-    /**
-     *
-     */
     @Serial
     private static final long serialVersionUID = 7381939453010636316L;
 
@@ -21,15 +18,15 @@ public class AxrrAuditEvent implements Serializable {
 
     private long version;
 
-    private Date dt_insert;
+    private Date dtInsert;
 
-    private Date dt_update;
+    private Date dtUpdate;
 
-    private Date dt_received;
+    private Date dtReceived;
 
-    private Date dt_responsed;
+    private Date dtResponsed;
 
-    private String event_name;
+    private String eventName;
 
     private String operation;
 
@@ -43,25 +40,25 @@ public class AxrrAuditEvent implements Serializable {
 
     private String status;
 
-    private String user_id;
+    private String userId;
 
-    private String device_id;
+    private String deviceId;
 
-    private String client_ip;
+    private String clientIp;
 
     private String description;
 
-    private String source_server_id;
+    private String sourceServerId;
 
-    private String target_server_id;
+    private String targetServerId;
 
-    private String group_name;
+    private String groupName;
 
-    private String display_name;
+    private String displayName;
 
-    private String user_name;
+    private String userName;
 
-    private String case_number;
+    private String caseNumber;
 
     private String exception;
 
@@ -69,10 +66,10 @@ public class AxrrAuditEvent implements Serializable {
 
     private int sent;
 
-    private Long fk_device_no;
+    private Long fkDeviceNo;
 
-    private Long fk_cmd_result_no;
+    private Long fkCmdResultNo;
 
-    private Long fk_data_result_no;
+    private Long fkDataResultNo;
 
 }

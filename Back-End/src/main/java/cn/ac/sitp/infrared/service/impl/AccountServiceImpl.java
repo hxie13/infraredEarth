@@ -10,9 +10,9 @@ import cn.ac.sitp.infrared.security.AccountAuthenticationException;
 import cn.ac.sitp.infrared.service.AccountService;
 import cn.ac.sitp.infrared.service.PasswordService;
 import cn.ac.sitp.infrared.util.PasswordValidator;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private static final Logger log = LoggerFactory.getLogger(AccountServiceImpl.class);
@@ -38,11 +39,8 @@ public class AccountServiceImpl implements AccountService {
     @Value("${app.login.lockminutes}")
     private long loginLockMinutes;
 
-    @Autowired
-    private GlobalAccountMapper accountMapper;
-
-    @Autowired
-    private PasswordService passwordService;
+    private final GlobalAccountMapper accountMapper;
+    private final PasswordService passwordService;
 
     @Override
     @Transactional
@@ -53,21 +51,21 @@ public class AccountServiceImpl implements AccountService {
             throw new AccountAuthenticationException("Account does not exist or is disabled");
         }
 
-        if (user.getExpiration_time() != null) {
-            LocalDateTime expiredTime = LocalDateTime.ofInstant(user.getExpiration_time().toInstant(), zoneId)
+        if (user.getExpirationTime() != null) {
+            LocalDateTime expiredTime = LocalDateTime.ofInstant(user.getExpirationTime().toInstant(), zoneId)
                     .plusDays(loginExpiredDays);
             if (expiredTime.isBefore(LocalDateTime.now())) {
                 throw new AccountAuthenticationException("Password has expired");
             }
         }
 
-        if ("Y".equalsIgnoreCase(user.getLock_status()) && user.getLock_time() != null) {
-            LocalDateTime unlockTime = LocalDateTime.ofInstant(user.getLock_time().toInstant(), zoneId)
+        if ("Y".equalsIgnoreCase(user.getLockStatus()) && user.getLockTime() != null) {
+            LocalDateTime unlockTime = LocalDateTime.ofInstant(user.getLockTime().toInstant(), zoneId)
                     .plusMinutes(loginLockMinutes);
             if (unlockTime.isBefore(LocalDateTime.now())) {
                 accountMapper.lockAccount(user.getUserid(), "N");
-                user.setFailure_count(0);
-                user.setLock_status("N");
+                user.setFailureCount(0);
+                user.setLockStatus("N");
             } else {
                 throw new AccountAuthenticationException("Account is locked until "
                         + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(unlockTime));
@@ -84,7 +82,7 @@ public class AccountServiceImpl implements AccountService {
             }
         } else {
             accountMapper.increaseFailureCount(user.getUserid());
-            int left = maxLoginAttempts - user.getFailure_count() - 1;
+            int left = maxLoginAttempts - user.getFailureCount() - 1;
             if (left <= 0) {
                 accountMapper.lockAccount(user.getUserid(), "Y");
                 LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(loginLockMinutes);
@@ -96,9 +94,6 @@ public class AccountServiceImpl implements AccountService {
         return user;
     }
 
-    /**
-     * Upgrade password hash from MD5 to BCrypt.
-     */
     private void upgradePasswordToBCrypt(String userid, String rawPassword) {
         try {
             String newHash = passwordService.hashPassword(rawPassword);
@@ -134,7 +129,7 @@ public class AccountServiceImpl implements AccountService {
 
         // Hash new password with BCrypt
         String hashedPassword = passwordService.hashPassword(newPassword);
-        
+
         AxrrUser user = new AxrrUser();
         user.setUserid(account.getUserid());
         user.setPassword(hashedPassword);
@@ -156,25 +151,25 @@ public class AccountServiceImpl implements AccountService {
         if (displayname == null || displayname.trim().isEmpty()) {
             throw new AccountAuthenticationException("Display name is required");
         }
-        
+
         // Check if username already exists
         if (accountMapper.countUserByUsername(username) > 0) {
             throw new AccountAuthenticationException("Username already exists");
         }
-        
+
         // Check if email already exists (if provided)
         if (email != null && !email.trim().isEmpty()) {
             if (accountMapper.countUserByEmail(email) > 0) {
                 throw new AccountAuthenticationException("Email already exists");
             }
         }
-        
+
         // Generate unique userid
         String userid = "USER_" + System.currentTimeMillis();
-        
+
         // Hash password with BCrypt
         String hashedPassword = passwordService.hashPassword(password);
-        
+
         // Create new user
         AxrrUser user = new AxrrUser();
         user.setUserid(userid);
@@ -182,12 +177,12 @@ public class AccountServiceImpl implements AccountService {
         user.setPassword(hashedPassword);
         user.setDisplayname(displayname);
         user.setEmail(email);
-        
+
         accountMapper.insertUser(user);
-        
+
         // Insert user-group-role association
         accountMapper.insertUserGroupRole(user.getUserno());
-        
+
         // Return the created account
         return accountMapper.getUserByName(username);
     }

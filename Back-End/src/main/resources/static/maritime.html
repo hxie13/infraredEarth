@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>红外地球 - 全球船舶态势分析</title>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/home-portal.css">
+  <script src="js/csrf-axios.js"></script>
+  <script src="js/session-state.js"></script>
+  <style>
+    body {
+      margin: 0; min-height: 100vh;
+      background:
+        radial-gradient(ellipse 70% 50% at 60% 10%, rgba(0,180,255,0.10), transparent),
+        linear-gradient(180deg, #04112e 0%, #031028 48%, #020915 100%);
+      color: #eef3ff;
+      font-family: "Noto Sans SC","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+      --portal-bg: #031028;
+      --portal-surface: rgba(10,22,54,0.8);
+      --portal-border: rgba(130,157,255,0.16);
+      --portal-shadow: 0 28px 80px rgba(0,0,0,0.28);
+      --portal-text: #eef3ff;
+      --portal-muted: rgba(223,232,255,0.76);
+      --portal-accent: linear-gradient(135deg, #ff2ea6, #8e49ff);
+      --portal-blue: linear-gradient(135deg, #1d8dff, #315cff);
+      --paper-bg: linear-gradient(180deg, rgba(247,250,255,0.98), rgba(232,239,255,0.92));
+      --paper-text: #102042;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Layout ── */
+    .page-body { padding-top: 80px; min-height: 100vh; }
+
+    /* ── Main Content ── */
+    .case-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 34px 32px 60px;
+    }
+
+    /* ── Hero Banner ── */
+    .case-hero {
+      position: relative; overflow: hidden;
+      background: var(--portal-surface);
+      border: 1px solid var(--portal-border);
+      border-radius: 28px;
+      padding: 52px 44px;
+      margin-bottom: 28px;
+      box-shadow: var(--portal-shadow);
+      backdrop-filter: blur(18px);
+      display: flex; align-items: center; gap: 38px;
+    }
+    .case-hero::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(circle at 80% 20%, rgba(0,168,255,0.14), transparent 40%),
+        radial-gradient(circle at 10% 80%, rgba(255,46,166,0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.03), transparent 48%);
+    }
+    .hero-text { flex: 1; position: relative; z-index: 1; }
+    .hero-visual {
+      flex: 0 0 200px; position: relative; z-index: 1;
+      display: grid; place-items: center;
+    }
+    .hero-icon-ring {
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(29,141,255,0.2), rgba(142,73,255,0.15));
+      border: 2px solid rgba(130,157,255,0.22);
+      display: grid; place-items: center;
+      font-size: 3.4rem; color: rgba(100,180,255,0.8);
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      width: fit-content; padding: 8px 14px;
+      border-radius: 999px; background: rgba(255,255,255,0.06);
+      color: rgba(236,243,255,0.82); font-size: 0.78rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .case-hero h1 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800; line-height: 1.3;
+      margin: 0 0 14px;
+    }
+    .case-hero .hero-desc {
+      color: var(--portal-muted); font-size: 1rem; line-height: 1.75; margin: 0;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 20px; padding: 10px 20px;
+      border-radius: 999px; border: 1px solid rgba(140,165,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #eef3ff; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .back-link:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); }
+
+    @media (max-width: 768px) {
+      .case-hero { flex-direction: column; text-align: center; padding: 34px 24px; }
+      .hero-visual { flex: none; }
+    }
+
+    /* ── Section Card ── */
+    .section-card {
+      position: relative; overflow: hidden;
+      background: var(--portal-surface);
+      border: 1px solid var(--portal-border);
+      border-radius: 24px;
+      padding: 34px 32px;
+      margin-bottom: 22px;
+      box-shadow: 0 18px 44px rgba(0,0,0,0.18);
+      backdrop-filter: blur(18px);
+    }
+    .section-card::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 40%);
+    }
+    .section-card h2 {
+      font-size: 1.35rem; font-weight: 700; margin: 0 0 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--portal-border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-card h2 .sec-icon {
+      display: grid; place-items: center;
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--portal-blue);
+      font-size: 0.95rem; flex-shrink: 0;
+    }
+    .section-card p {
+      color: var(--portal-muted);
+      line-height: 1.85; margin: 0 0 14px;
+      text-indent: 2em;
+    }
+
+    /* ── Figures ── */
+    .figure {
+      margin: 22px 0;
+      padding: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(140,165,255,0.12);
+      border-radius: 18px;
+    }
+    .figure img, .figure video {
+      display: block; max-width: 100%; height: auto;
+      border-radius: 12px; margin: 0 auto;
+    }
+    .figure-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .figure-row img {
+      width: 100%; height: 240px; object-fit: cover; border-radius: 12px;
+    }
+    .figure-caption {
+      text-align: center; font-size: 0.82rem;
+      color: var(--portal-muted); margin-top: 12px;
+      font-style: italic; line-height: 1.6;
+    }
+
+    /* ── Video Card ── */
+    .video-card {
+      position: relative; overflow: hidden;
+      border-radius: 18px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.3);
+    }
+    .video-card video {
+      display: block; width: 100%; border-radius: 18px;
+    }
+
+    /* ── Highlight Box ── */
+    .highlight-box {
+      margin: 22px 0; padding: 20px 24px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(29,141,255,0.12), rgba(142,73,255,0.08));
+      border-left: 4px solid #1d8dff;
+    }
+    .highlight-box p {
+      margin: 0; text-indent: 0; color: rgba(220,232,255,0.9);
+    }
+
+    /* ── Footer ── */
+    .case-footer {
+      padding: 22px 32px;
+      text-align: center; font-size: 0.82rem;
+      color: var(--portal-muted);
+      border-top: 1px solid var(--portal-border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Platform Header ── -->
+  <header class="platform-header">
+    <div class="platform-brand">
+      <div class="brand-flag">IR</div>
+      <div class="brand-copy">
+        <strong>红外地球</strong>
+        <small>Infrared Earth</small>
+      </div>
+    </div>
+    <nav class="platform-nav">
+      <a href="index.html">首页</a>
+      <a href="data-hub.html">数据检索</a>
+      <a href="processing.html">模型分析</a>
+      <a href="examples.html" class="is-active">案例分析</a>
+    </nav>
+    <div class="platform-actions nav-actions">
+      <button class="ghost-btn btn-login">用户登录</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <main class="case-content">
+
+      <!-- ── Hero ── -->
+      <div class="case-hero">
+        <div class="hero-text">
+          <div class="eyebrow"><i class="fa fa-ship"></i> 海洋遥感案例</div>
+          <h1>双星观测关联下的尺度效应思考</h1>
+          <p class="hero-desc">天基平台多源数据整合——基于相似性度量的识别技术，推进低轨多星海上目标航迹关联。</p>
+          <button class="back-link" onclick="history.back()">
+            <i class="fa fa-arrow-left"></i> 返回案例列表
+          </button>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-icon-ring">
+            <i class="fa fa-ship"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section 1 ── -->
+      <div class="section-card">
+        <h2><span class="sec-icon"><i class="fa fa-crosshairs"></i></span> 研究要点</h2>
+        <p>3～4级海况下，潜艇水动力尾流可维持1～1.5h，且延伸范围可达15～25km，持续时间长，范围广。</p>
+
+        <div class="figure">
+          <div class="figure-row">
+            <img src="img/低轨多星观测关联.png" alt="低轨多星观测关联">
+            <img src="img/相似性关联算法.png" alt="相似性关联算法">
+          </div>
+          <div class="figure-caption">图1-2：利用 Landsat-9 和 SDGSAT-1 TIS 热红外遥感影像基于相似性度量的海战场航迹关联算法</div>
+        </div>
+
+        <div class="highlight-box">
+          <p>通过整合不同轨道高度的卫星观测数据，提高资源利用效率和卫星应用的整体效益，增强天基信息系统高时敏连续跟踪能力。</p>
+        </div>
+      </div>
+
+      <!-- ── Section 2 ── -->
+      <div class="section-card">
+        <h2><span class="sec-icon"><i class="fa fa-satellite-dish"></i></span> 双星关联检测</h2>
+        <p>结合单星数据与双星数据关联的检测结果，基于相似性度量的识别技术，推进低轨多星海上目标航迹关联，实现更好的态势检测性能。</p>
+
+        <div class="figure">
+          <div class="figure-row">
+            <img src="img/SDG-bnm.png" alt="SDG-1 原始影像">
+            <img src="img/SDG-bnm-2.png" alt="SDG-1 检测结果">
+          </div>
+          <div class="figure-caption">图3-4：原始 SDGSAT-1 观测影像与检测结果</div>
+        </div>
+
+        <div class="figure">
+          <div class="figure-row">
+            <img src="img/Landsat-bnm.png" alt="Landsat 原始影像">
+            <img src="img/Landsat-bnm-2.png" alt="Landsat 检测结果">
+          </div>
+          <div class="figure-caption">图5-6：原始 Landsat 观测影像与检测结果</div>
+        </div>
+      </div>
+
+      <!-- ── Section 3: Video ── -->
+      <div class="section-card">
+        <h2><span class="sec-icon"><i class="fa fa-play-circle"></i></span> 多尺度关联检测结果</h2>
+
+        <div class="figure">
+          <div class="video-card">
+            <video id="myVideo" src="img/ship.mp4" loop muted playsinline></video>
+          </div>
+          <div class="figure-caption">图7：SDGSAT-1 与 Landsat 观测影像尺度关联检测结果</div>
+        </div>
+
+        <div class="highlight-box">
+          <p>结合以上分析，可以认为：单星观测的不足，通过双星多尺度的互补，能实现态势检测能力的提升。但双星观测信息的融合机理有待进一步研究。</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="case-footer">
+    红外地球 Infrared Earth &copy; 2025 中国科学院上海技术物理研究所
+  </footer>
+
+  <script>
+    // Auto-play video when visible
+    var video = document.getElementById('myVideo');
+    if (video) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { video.play(); }
+          else { video.pause(); }
+        });
+      }, { threshold: 0.3 });
+      observer.observe(video);
+    }
+  </script>
+</body>
+</html>

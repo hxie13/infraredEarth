@@ -1,13 +1,12 @@
 package cn.ac.sitp.infrared.datasource.dao;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-
-import cn.ac.sitp.infrared.util.Util;
 
 @Setter
 @Getter
@@ -22,25 +21,22 @@ public class Job implements Serializable {
     private DataSet dataSet;
     private List<NC> ncList;
     private Long insertUserId;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private Date insertTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private Date updateTime;
-    private String insertTimeStr;
-    private String updateTimeStr;
 
-    public String getInsertTimeStr() {
-        return Util.dateToStringLong(this.insertTime, Util.FORMAT_LONG);
-    }
+    private String resultPath;
+    private String errorMessage;
 
-    public void setInsertTimeStr(String insertTimeStr) {
-        this.insertTimeStr = Util.dateToStringLong(this.insertTime, Util.FORMAT_LONG);
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
+    private Date startedTime;
 
-    public String getUpdateTimeStr() {
-        return Util.dateToStringLong(this.updateTime, Util.FORMAT_LONG);
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
+    private Date completedTime;
 
-    public void setUpdateTimeStr(String updateTimeStr) {
-        this.updateTimeStr = Util.dateToStringLong(this.updateTime, Util.FORMAT_LONG);
-    }
+    private String parameters;
 
 }

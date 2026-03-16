@@ -5,9 +5,10 @@ import cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent;
 import cn.ac.sitp.infrared.datasource.enumeration.LogActionEnum;
 import cn.ac.sitp.infrared.datasource.mapper.GlobalLogMapper;
 import cn.ac.sitp.infrared.service.AuditLogService;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -16,35 +17,36 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class AuditLogServiceImpl implements AuditLogService {
-    private static final Log LOG = LogFactory.getLog(AuditLogServiceImpl.class);
 
-    @Autowired
-    private GlobalLogMapper logMapper;
+    private static final Logger log = LoggerFactory.getLogger(AuditLogServiceImpl.class);
 
+    private final GlobalLogMapper logMapper;
 
+    @Async
     @Override
     public void saveAuditLogDesc(String ip, LogActionEnum action, String status, Date receivedTime, String exception,
                                  String hospitalCode, String patid, String patname, String patsex, Date patdob, String description,
                                  AxrrAccount account) {
 
-        AxrrAuditEvent log = new AxrrAuditEvent();
-        log.setEvent_name(action.toString());
-        log.setClient_ip(ip);
+        AxrrAuditEvent event = new AxrrAuditEvent();
+        event.setEventName(action.toString());
+        event.setClientIp(ip);
         if (account == null) {
-            log.setUser_id("anonymous");
-            log.setUser_name("anonymous");
-            log.setDisplay_name("anonymous");
+            event.setUserId("anonymous");
+            event.setUserName("anonymous");
+            event.setDisplayName("anonymous");
         } else {
-            log.setUser_id(account.getUserid());
-            log.setUser_name(account.getUsername());
-            log.setDisplay_name(account.getDisplayname());
+            event.setUserId(account.getUserid());
+            event.setUserName(account.getUsername());
+            event.setDisplayName(account.getDisplayname());
         }
-        log.setDescription(description);
-        log.setStatus(status);
-        log.setDt_received(receivedTime);
-        log.setException(exception);
-        logMapper.insertAuditLog(log);
+        event.setDescription(description);
+        event.setStatus(status);
+        event.setDtReceived(receivedTime);
+        event.setException(exception);
+        logMapper.insertAuditLog(event);
     }
 
     @Override
@@ -61,22 +63,22 @@ public class AuditLogServiceImpl implements AuditLogService {
         saveAuditLogDesc(ip, action, status, receivedTime, exception, null, null, null, null, null, description, account);
     }
 
+    @Async
     @Override
     public void saveAccountAuditLog(String ip, LogActionEnum action, String status, Date receivedTime, String userid,
                                     String username, String exception) {
 
         AxrrAuditEvent event = new AxrrAuditEvent();
-        event.setEvent_name(action.toString());
-        event.setClient_ip(ip);
-        event.setUser_id(userid);
-        event.setUser_name(username);
+        event.setEventName(action.toString());
+        event.setClientIp(ip);
+        event.setUserId(userid);
+        event.setUserName(username);
         event.setDescription(action.getDescription());
         event.setStatus(status);
-        event.setDt_received(receivedTime);
-        event.setDt_responsed(new Date());
+        event.setDtReceived(receivedTime);
+        event.setDtResponsed(new Date());
         event.setException(exception);
         logMapper.insertAuditLog(event);
-
     }
 
 }

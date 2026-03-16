@@ -35,16 +35,16 @@ public class AxrrAccount implements Serializable {
 
     private List<AxrrClinicPermission> clinicPermissions;
 
-    private int failure_count;
+    private int failureCount;
 
     private Date updatetime;
 
-    private Date expiration_time;
+    private Date expirationTime;
 
-    private Date lock_time;
+    private Date lockTime;
 
-    private String lock_status;
+    private String lockStatus;
 
-    private Date valid_time;
+    private Date validTime;
 
 }

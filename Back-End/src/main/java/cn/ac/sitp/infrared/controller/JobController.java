@@ -10,29 +10,25 @@ import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.GlobalExceptionHandler;
 import cn.ac.sitp.infrared.web.request.AddJobRequest;
 import cn.ac.sitp.infrared.web.request.PaginationRequest;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/rest/job")
+@RequiredArgsConstructor
 public class JobController {
 
-    @Resource
-    private HttpServletRequest request;
-
-    @Autowired
-    private AuditLogService logService;
-
-    @Autowired
-    private JobService jobService;
+    private final HttpServletRequest request;
+    private final AuditLogService logService;
+    private final JobService jobService;
 
     @RequestMapping(value = "/list", method = RequestMethod.POST)
     public Map<String, Object> getJobList(@RequestBody(required = false) PaginationRequest requestBody) {
@@ -74,8 +70,11 @@ public class JobController {
 
         Long algorithmId = RequestValueUtils.requirePositiveId(addJobRequest.getAlgorithmId());
         Long dataSetId = RequestValueUtils.requirePositiveId(addJobRequest.getDataSetId());
-        jobService.addJob(dataSetId, algorithmId, user);
+        Long jobId = jobService.addJob(dataSetId, algorithmId, user);
+        jobService.simulateJobExecution(jobId);
         logService.saveAuditLog(ip, LogActionEnum.ADD_JOB, Util.STATUS_SUCCESS, new Date(), null, description, user);
-        return Util.suc(null);
+        Map<String, Object> contents = new HashMap<>();
+        contents.put("jobId", jobId);
+        return Util.suc(contents);
     }
 }

@@ -1,11 +1,11 @@
 package cn.ac.sitp.infrared.datasource.dao;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
-import cn.ac.sitp.infrared.util.Util;
 
 @Setter
 @Getter
@@ -17,24 +17,11 @@ public class DataSet implements Serializable {
     private Long id;
     private Long insertUserId;
     private Boolean delFlag;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private Date insertTime;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private Date updateTime;
-    private String insertTimeStr;
-    private String updateTimeStr;
 
-    public String getInsertTimeStr() {
-        return Util.dateToStringLong(this.insertTime, Util.FORMAT_LONG);
-    }
-
-    public void setInsertTimeStr(String insertTimeStr) {
-        this.insertTimeStr = Util.dateToStringLong(this.insertTime, Util.FORMAT_LONG);
-    }
-
-    public String getUpdateTimeStr() {
-        return Util.dateToStringLong(this.updateTime, Util.FORMAT_LONG);
-    }
-
-    public void setUpdateTimeStr(String updateTimeStr) {
-        this.updateTimeStr = Util.dateToStringLong(this.updateTime, Util.FORMAT_LONG);
-    }
 }

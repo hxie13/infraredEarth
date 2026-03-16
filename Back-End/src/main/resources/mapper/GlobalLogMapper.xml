@@ -4,17 +4,38 @@
 
 <mapper namespace="cn.ac.sitp.infrared.datasource.mapper.GlobalLogMapper">
 
+    <resultMap id="AuditEvent" type="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent">
+        <id property="id" column="id"/>
+        <result property="dtInsert" column="dt_insert"/>
+        <result property="dtUpdate" column="dt_update"/>
+        <result property="dtReceived" column="dt_received"/>
+        <result property="dtResponsed" column="dt_responsed"/>
+        <result property="eventName" column="event_name"/>
+        <result property="userId" column="user_id"/>
+        <result property="deviceId" column="device_id"/>
+        <result property="clientIp" column="client_ip"/>
+        <result property="sourceServerId" column="source_server_id"/>
+        <result property="targetServerId" column="target_server_id"/>
+        <result property="groupName" column="group_name"/>
+        <result property="displayName" column="display_name"/>
+        <result property="userName" column="user_name"/>
+        <result property="caseNumber" column="case_number"/>
+        <result property="fkDeviceNo" column="fk_device_no"/>
+        <result property="fkCmdResultNo" column="fk_cmd_result_no"/>
+        <result property="fkDataResultNo" column="fk_data_result_no"/>
+    </resultMap>
+
     <insert id="insertAuditLog" parameterType="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent" useGeneratedKeys="true" keyProperty="id">
         insert into t_audit_event(event_name, dt_insert, dt_received, request_channel,
                                   request_sys, dt_responsed, status, dt_update,
                                   user_id, version, client_ip, description, display_name,
                                   user_name, operation)
-        values (#{event_name}, now(), #{dt_received}, 'infrared', 'From infrared', #{dt_responsed}, #{status}, now(),
-                #{user_id}, 1, #{client_ip}, #{description, jdbcType=VARCHAR}, #{display_name,
-		jdbcType=VARCHAR}, #{user_name, jdbcType=VARCHAR}, #{operation})
+        values (#{eventName}, now(), #{dtReceived}, 'infrared', 'From infrared', #{dtResponsed}, #{status}, now(),
+                #{userId}, 1, #{clientIp}, #{description, jdbcType=VARCHAR}, #{displayName,
+		jdbcType=VARCHAR}, #{userName, jdbcType=VARCHAR}, #{operation})
     </insert>
 
-    <select id="selectLogList" resultType="cn.ac.sitp.infrared.datasource.dao.AxrrAuditEvent">
+    <select id="selectLogList" resultMap="AuditEvent">
         select *
         from t_audit_event
         <where>

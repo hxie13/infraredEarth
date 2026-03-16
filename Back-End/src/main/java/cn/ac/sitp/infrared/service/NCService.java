@@ -14,7 +14,7 @@ public interface NCService {
                                   String satelliteType, String resolution, String imgType, String processType, Date beginDate,
                                   Date endDate);
 
-    void addDataset(List<Long> ncIdList, AxrrAccount user);
+    Long addDataset(List<Long> ncIdList, AxrrAccount user);
 
     InputStream getNcFileStream(Long id) throws Exception ;
 

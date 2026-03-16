@@ -1,0 +1,2685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>红外地球 - 多尺度红外预警分析平台</title>
+    <!-- 引入外部资源 -->
+	
+	  <script src="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Cesium.js"></script>
+     <link href="https://cesium.com/downloads/cesiumjs/releases/1.131/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	  <!-- 引入Vue3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入element-plus样式文件 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <!-- 引入element-plus组件库 -->
+    <script src="https://unpkg.com/element-plus"></script>
+    <!-- 引入axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="js/csrf-axios.js"></script>
+    <script src="js/session-state.js"></script>
+    <script>
+      const APP_ORIGIN = window.location.origin;
+      const APP_BASE_URL = `${APP_ORIGIN}/infrared`;
+      const buildApiUrl = (path) => `${APP_BASE_URL}${path}`;
+    </script>
+
+	
+     
+   
+    <!-- Tailwind配置 -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#165DFF',
+              secondary: '#0FC6C2',
+              accent: '#722ED1',
+              dark: '#1D2129',
+              light: '#F2F3F5',
+              success: '#00B42A',
+              warning: '#FF7D00',
+              danger: '#F53F3F'
+            },
+            fontFamily: {
+              inter: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          },
+        }
+      }
+    </script>
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss" scoped>
+      @layer utilities {
+        .content-auto {
+          content-visibility: auto;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .text-shadow {
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .transition-transform-opacity {
+          transition-property: transform, opacity;
+        }
+      }
+    
+
+        .service-list {
+            transition: max-height 0.5s ease-out;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            font-size: 16px;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+            background-color: var(--dark-bg);
+            background-image: 
+                radial-gradient(circle at 75% 30%, rgba(0, 168, 255, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 25% 70%, rgba(100, 255, 218, 0.1) 0%, transparent 30%);
+            color: var(--light-text);
+        }
+        
+        /* 导航栏样式 - 科技感 */
+        .navbar {
+            background-color: rgb(10,25,49);
+            color: white;
+            padding: 0 5%;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 168, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 40px;
+            margin-right: 15px;
+        }
+        
+        .logo-text {
+            font-size: 22px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #00a8ff, #64ffda);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+         .nav-links {
+            display: flex;
+            flex-grow: 1;
+            justify-content: center;
+        }
+        
+        .nav-link {
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 10px 25px;
+            margin: 0 5px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            position: relative;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-link.active {
+            color: #64ffda;
+        }
+        
+        .nav-link:hover {
+            color: #64ffda;;
+        }
+        
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 25%;
+            width: 50%;
+            height: 2px;
+            background:#64ffda;;
+            border-radius: 2px;
+        }
+		
+		
+		
+        
+        .nav-actions {
+            display: flex;
+        }
+        
+		
+		   ul.pagination {
+            display: inline-block;
+            padding: 0;
+            float:right;
+            color:#ffffff;
+            margin-top: 10px;
+        }
+
+        ul.pagination li {display: inline;}
+
+        ul.pagination li a {
+            color: #ffffff;
+            float: left;
+            padding: 8px 16px;
+            text-decoration: none;
+
+            border-radius: 5px;
+        }
+
+        ul.pagination li a.active {
+            background-color:#2f698a;
+            color: white;
+            border-radius: 5px;
+        }
+
+        ul.pagination li a:hover:not(.active) {background-color: #ddd;}
+		
+		
+		
+        .btn {
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 15px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+        
+        .btn-login {
+            background-color: #00a8ff;
+            color: #081425;
+            box-shadow:0 0 10px 0 rgba(0,168,225,0.5);
+        }
+        
+        .btn-login:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        
+        .btn-help {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .btn-help:hover {
+            background-color: rgba(0, 168, 255, 0.1);
+            box-shadow: var(--border-glow);
+        }
+        
+        /* 主内容区域 */
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+        #cesiumContainer{
+		display: flex;
+            flex: 1;
+		}
+        /* 固定侧边栏 - 科技感 */
+        .sidebar {
+            width: 540px;
+           background-color:rgb(10,25,47);
+            padding: 20px 0;
+            overflow-y: auto;
+            height: calc(100vh - 70px);
+            position: sticky;
+            top: 70px;
+            transition: width 0.3s;
+            border-right: 1px solid rgba(0, 168, 255, 0.1);
+            backdrop-filter: blur(5px);
+			color: #e5e7eb
+        }
+        
+        /* 侧边栏折叠时的样式 */
+        .sidebar.collapsed {
+            width: 70px;
+            overflow: hidden;
+        }
+		
+		
+
+		
+        
+        .sidebar.collapsed .category-title span,
+        .sidebar.collapsed .service-item span,
+        .sidebar.collapsed .search-option {
+            display: none;
+        }
+        
+        .sidebar.collapsed .category-title,
+        .sidebar.collapsed .service-item {
+            justify-content: center;
+            padding: 15px 10px;
+        }
+        
+        .sidebar.collapsed .category-icon {
+            margin-right: 0;
+        }
+        
+        /* 内容区域 */
+        .content {
+            flex: 1;
+            /* padding: 30px; */
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* 数据检索分类样式 - 科技感 */
+        .search-category {
+            margin-bottom: 20px;
+        }
+        
+        .category-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--light-text);
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .category-title:hover {
+            background-color: rgba(0, 168, 255, 0.1);
+        }
+        
+        .category-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--darker-bg);
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        
+        .service-list {
+            list-style: none;
+            padding: 0 25px 0 68px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .service-list.expanded {
+            max-height: 1000px;
+        }
+        
+        .service-item {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            background-color: rgba(0, 168, 255, 0.05);
+            border-left: 2px solid transparent;
+        }
+        
+        .service-item:hover {
+            background-color: rgba(0, 168, 255, 0.1);
+            border-left: 2px solid var(--primary-color);
+        }
+        
+        .service-item.active {
+            background-color: rgba(0, 168, 255, 0.15);
+            color: var(--accent-color);
+            font-weight: 500;
+            border-left: 2px solid var(--accent-color);
+        }
+        
+        .service-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary-color);
+        }
+        
+        /* 折叠按钮 */
+        .collapse-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+        
+        .collapse-btn:hover {
+            color: var(--accent-color);
+            transform: rotate(90deg);
+        }
+        
+        /* 内容区域样式 */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .content-title {
+            font-size: 28px;
+            color: var(--light-text);
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 0.5px;
+        }
+        
+        .content-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            padding: 0px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 168, 255, 0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        
+        .content-card:hover {
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 168, 255, 0.2);
+        }
+        
+        /* 搜索选项样式 - 科技感 */
+        .search-option {
+            margin: 15px 0;
+            /* padding: 0 25px; */
+            
+        }
+        
+        .search-option label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        
+        .search-option select,
+        .search-option input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            border-radius: 6px;
+            background-color: rgba(250, 253, 254, 0.05);
+            font-size: 14px;
+            color: var(--light-text);
+            transition: all 0.3s;
+        }
+        
+        .search-option select:focus,
+        .search-option input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--border-glow);
+            /* background-color: #FFF; */
+        }
+		
+	
+
+ input[type="date"]::-webkit-calendar-picker-indicator {
+  color: #e5e7eb;
+  background-color: #e5e7eb;
+}
+ /deep/  .el-table, .el-table__expanded-cell {
+    background-color: bule;
+    background-color: transparent;
+  }
+
+::v-deep .el-date-editor .el-range-input {
+  background-color: #e5e7eb;
+}
+
+::v-deep .el-table thead tr th {
+  background-color: #000;
+}
+
+
+
+
+
+
+        .date-range {
+            display: flex;
+            gap: 15px;
+             color:#e5e7eb;
+            /* background-color: (0, 168, 255, 0.05); */
+        }
+        
+        .date-range input {
+            flex: 1;
+            color:#e5e7eb;
+            /* background-color: (0, 168, 255, 0.05); */
+            
+            
+        }
+        
+        .spatial-method {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #FFF;
+        }
+        
+        .spatial-tab {
+            display: none;
+            color:#e5e7eb;
+            padding: 15px;
+            background-color: rgb(10 25 47);
+            /* background-color: #FFF; */
+            border-radius: 6px;
+            border: 1px solid rgba(0, 168, 255, 0.1);
+        }
+        
+        .spatial-tab.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .spatial-tabs {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid rgba(0, 168, 255, 0.2);
+            margin-bottom: 15px;
+        }
+        
+        .spatial-tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 13px;
+            color: var(--light-text);
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .spatial-tab-btn.active {
+            border-bottom: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .spatial-tab-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .map-container {
+            height: 180px;
+            background: rgba(0, 168, 255, 0.05);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            margin-top: 10px;
+            border: 1px dashed rgba(0, 168, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .map-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, transparent 48%, rgba(0, 168, 255, 0.1) 49%, rgba(0, 168, 255, 0.1) 51%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(0, 168, 255, 0.1) 49%, rgba(0, 168, 255, 0.1) 51%, transparent 52%);
+            background-size: 20px 20px;
+        }
+        
+        .search-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            gap: 15px;
+            padding: 0 25px;
+        }
+        
+        .search-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--darker-bg);
+            /* border: none; */
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: var(--border-glow);
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 168, 255, 0.4);
+        }
+        
+        .reset-btn {
+            padding: 12px 25px;
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid rgba(0, 168, 255, 0.4);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .reset-btn:hover {
+            background: rgba(0, 168, 255, 0.1);
+            box-shadow: var(--border-glow);
+        }
+        
+        /* 结果区域样式 - 科技感 */
+        .result-sort {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 168, 255, 0.2);
+        }
+        
+        .result-sort h2 {
+            font-size: 18px;
+            color: var(--light-text);
+            font-weight: 500;
+        }
+        
+        .result-sort select {
+            padding: 8px 15px;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            border-radius: 6px;
+            background-color: rgba(0, 168, 255, 0.05);
+            color: var(--light-text);
+            font-size: 14px;
+        }
+        
+        .result-sort select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: var(--border-glow);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 25px;
+            gap: 10px;
+        }
+        
+        .page-btn {
+            padding: 8px 15px;
+            background: rgba(0, 168, 255, 0.05);
+            border: 1px solid rgba(0, 168, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--light-text);
+            transition: all 0.3s;
+        }
+        
+        .page-btn:hover {
+            background: rgba(0, 168, 255, 0.1);
+            border-color: var(--primary-color);
+        }
+        
+        .page-btn.active {
+            background: var(--primary-color);
+            color: var(--darker-bg);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        /* 收藏按钮样式 */
+        .favorite-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 22px;
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            margin-left: 10px;
+            position: relative;
+            width: 24px;
+            height: 24px;
+        }
+        
+        .favorite-btn::before {
+            content: '☆';
+            position: absolute;
+            transition: all 0.3s;
+        }
+        
+        .favorite-btn.active::before {
+            content: '★';
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.7);
+            transform: scale(1.2);
+        }
+        
+        /* 结果项样式 - 科技感 */
+        .result-item {
+            display: flex;
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 168, 255, 0.1);
+            align-items: center;
+            transition: all 0.3s;
+            background-color: rgba(10, 25, 47, 0.5);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .result-item:hover {
+            background-color: rgba(0, 168, 255, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-thumbnail {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, rgba(0, 168, 255, 0.1), rgba(100, 255, 218, 0.1));
+            margin-right: 20px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(0, 168, 255, 0.2);
+        }
+        
+        .result-thumbnail::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, transparent 48%, rgba(0, 168, 255, 0.1) 49%, rgba(0, 168, 255, 0.1) 51%, transparent 52%),
+                linear-gradient(-45deg, transparent 48%, rgba(0, 168, 255, 0.1) 49%, rgba(0, 168, 255, 0.1) 51%, transparent 52%);
+            background-size: 20px 20px;
+            opacity: 0.5;
+        }
+        
+        .result-info {
+            flex: 1;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            font-size: 18px;
+        }
+        
+        .result-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: rgba(230, 241, 255, 0.7);
+        }
+        
+        .result-meta span {
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-meta .icon {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+         .toolbar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 999;
+      background: rgba(42, 42, 42, 0.8);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .butClass {
+      /* margin: 5px;
+      padding: 5px 10px;
+      border-radius: 6%;
+    border: 1px solid rgb(0 168 255 / 60%); */
+            width: 20%;
+            padding: 5px 10px;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+            border-radius: 6px;
+            background-color: rgba(87, 160, 196, 0.05);
+            font-size: 14px;
+            color: var(--light-text);
+
+    }
+    .btn-row {
+            display: flex;
+            gap: 12px;          /* 按钮之间的固定空隙 */
+            }
+    .btn-row .butClass {
+            flex: 1 1 0;        /* 等宽，填满剩余空间 */
+            padding: 6px 0;     /* 垂直内边距，可按需调整 */
+            box-sizing: border-box;
+    }
+        
+        
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 280px;
+            }
+/*             
+            .earth-bg {
+                right: 5%;
+                width: 250px;
+                height: 250px;
+            } */
+            
+            .earth-bg {
+            position: fixed;
+            top: 50%;
+            right: 10%;
+            width: 300px;
+            height: 300px;
+            background: url('https://cdn.jsdelivr.net/gh/apoorv-projects/earth@main/earth-icon.png') no-repeat center center;
+            background-size: contain;
+            opacity: 0.1;
+            z-index: -1;
+            animation: rotate 120s linear infinite;
+        }
+
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 70px;
+                height: calc(100vh - 70px);
+                z-index: 90;
+                transition: left 0.3s;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .content {
+                margin-left: 0;
+            }
+            
+            .collapse-btn {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .earth-bg {
+                display: none;
+            }
+        }
+    </style>
+	
+	<style scoped>
+/deep/ .el-table thead tr th {
+  background-color: #FFDAB9;
+}
+
+
+ .el-select__placeholder.is-transparent {
+    color: #e1e6ef;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+ .el-select__placeholder {
+    color: #e1e6ef;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    z-index: -1;
+}
+
+
+
+
+
+
+
+.el-select__wrapper {
+    align-items: center;
+    background-color: #16253a;
+    border-radius: var(--el-border-radius-base);
+    box-shadow: 0 0 0 1px var(--el-border-color) inset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    gap: 6px;
+    line-height: 24px;
+    min-height: 32px;
+    padding: 4px 12px;
+    position: relative;
+    text-align: left;
+    transform: translateZ(0);
+    transition: var(--el-transition-duration);
+}
+</style>
+    <link rel="stylesheet" href="./css/destine-theme.css">
+</head>
+
+<body class="destine-theme">
+  <div id="app" >
+    
+    <nav class="navbar">
+        <!-- Logo区域 -->
+		  <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center" style="background-color:#067aec">
+              <i class="fa fa-globe text-white text-xl"></i>
+            </div>
+            <span class="text-xl font-bold">红外地球</span>
+        </div>
+        
+        <!-- 主导航链接 -->
+        <div class="nav-links">
+                <a href="index.html" class="nav-link">首页</a>
+                 <a href="data-hub.html" class="nav-link active" >数据检索</a>
+            <a href="processing.html" class="nav-link ">模型分析</a>
+               <a href="examples.html" class="nav-link">案例分析</a>
+        </div>
+        
+        <!-- 用户操作区域 -->
+        <div class="nav-actions">
+            <div class="nav-earth"></div>
+            <button class="btn btn-login">用户登录</button>
+            <button class="btn btn-help">帮助中心</button>
+        </div>
+    </nav>
+    
+    <div class="main-container" id="maincontainer">
+	  <div id="cesiumContainer">
+        <!-- 固定侧边栏 - 科技感设计 -->
+       <!-- 固定侧边栏 - 科技感设计 -->
+        <div class="sidebar" id="sidebar">
+            <button class="collapse-btn" id="collapseBtn" onclick="toggleCategory2(this)">≡</button>
+            <!-- 影像检索服务 -->
+            <div class="search-category" id="searchCategory">
+                <div class="category-title" onclick="toggleCategory(this)">
+                    <div class="category-icon">🛰️</div>
+                    <!-- <a href="#imgIndex" class="text-dark hover:text-primary font-medium transition-colors flex items-center"> -->
+                        <span>影像检索服务</span>
+                    </a>
+                </div>
+                <ul class="service-list">
+                    <!-- 时间范围 -->
+                    <div class="search-option">
+                        <label>时间范围</label>
+                        <div class="date-range">
+                            <input type="date" placeholder="开始日期">
+                            <input type="date" placeholder="结束日期">
+                        </div>
+                    </div>
+                    <div class="search-option">
+                   <label>地图绘制</label>
+                        <div class="btn-row">
+                            <button class="butClass" id="drawPolygon" >绘制面</button>
+                            <button class="butClass" id="clearAll">清除所有</button>
+                            
+                        </div>
+
+                     </div>
+                    <!-- 空间范围 -->
+                    <div class="search-option">
+                        <label>检索区域</label>
+                        <div class="spatial-method">                     
+                            <div id="administrative" class="spatial-tab active">
+                                 
+                                <input type="text" id="name" name="name" placeholder="请输入要检索的区域" required></input>
+                                
+                                <select style="color: #e5e7eb;margin-top:10px">
+                                    <option>选择省份</option>
+                                    <option>北京市</option>
+                                    <option>上海市</option>
+                                    <option>广东省</option>
+                                    <option>江苏省</option>
+                                    <option>浙江省</option>
+                                </select>
+                                <select style="margin-top: 10px;color: #e5e7eb;">
+                                    <option>选择城市</option>
+                                    <option>北京市</option>
+                                    <option>朝阳区</option>
+                                    <option>海淀区</option>
+                                    <option>东城区</option>
+                                    <option>西城区</option>
+                                </select>
+                            </div>
+                            
+                            <div id="keyword" class="spatial-tab">
+                                <input type="text" placeholder="输入地名或坐标">
+                            </div>
+                            
+                            <div id="draw" class="spatial-tab">
+                                <div class="map-container">
+                                    [在此绘制区域]
+                                </div>
+                                <div style="margin-top: 10px; display: flex; gap: 5px;">
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">多边形</button>
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">矩形</button>
+                                    <button style="padding: 5px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">清除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 卫星源 -->
+                    <div class="search-option">
+                        <label>卫星类型</label>
+								<el-select style="color: #FFF;" v-model="satelliteType" placeholder="请选择卫星类型">
+    <el-option
+      v-for="item in typeList.satelliteTypeList"
+      :key="item"
+      :label="item"
+      :value="item">
+    </el-option>
+  </el-select>
+                    </div>
+                    
+                    <div class="search-option">
+                        <label>产品类型</label>
+							<el-select style="color: #FFF;" v-model="processValue" placeholder="请选择产品类型">
+    <el-option
+      v-for="item in typeList.processTypeList"
+      :key="item"
+      :label="item"
+      :value="item">
+    </el-option>
+  </el-select>
+                    
+                    </div>
+                    
+                    <!-- 产品类型 -->
+                    <div class="search-option">
+					 <label>仪器类型</label>
+					<el-select v-model="imgType" style="color: #FFF;" placeholder="请选择仪器类型">
+    <el-option
+      v-for="item in typeList.imgTypeList"
+      :key="item"
+      :label="item"
+      :value="item">
+    </el-option>
+  </el-select>
+                    
+                   
+                    
+                    <!-- 操作按钮 -->
+                    <div class="search-actions">
+                        <button class="reset-btn" onclick="resetSearch('image')">重置</button>
+                        <button class="search-btn" onclick="doSearch('image')">检索</button>
+                    </div>
+                </ul>
+            </div>
+            
+            <!-- 极端灾害服务 -->
+            <div class="search-category" id="searchCategory2">
+                <div class="category-title" onclick="toggleCategory(this)">
+                    <div class="category-icon">⚠️</div>
+                    <!-- <a href="#disasterServier" class="text-dark hover:text-primary font-medium transition-colors flex items-center"> -->
+                <span>极端灾害服务</span>
+                        <!-- <i class="fa fa-angle-down ml-1 text-sm transition-transform group-hover:rotate-180"></i> -->
+                    </a>
+                    <!-- <span>极端灾害服务</span> -->
+                </div>
+                <ul class="service-list">
+                    <!-- 时间范围 -->
+                    <div class="search-option">
+                        <label>时间范围</label>
+                        <div class="date-range">
+                            <input type="date" placeholder="开始日期">
+                            <input type="date" placeholder="结束日期">
+                        </div>
+                    </div>
+                    
+                    <!-- 空间范围 -->
+                    <div class="search-option">
+                        <label>检索区域</label>
+                        <div class="spatial-method">
+                           <!-- <div class="spatial-tabs">
+                                <button class="spatial-tab-btn active" onclick="switchSpatialTab(this, 'disaster-administrative')">行政区</button>
+                                <button class="spatial-tab-btn" onclick="switchSpatialTab(this, 'disaster-keyword')">关键字</button>
+                                <button class="spatial-tab-btn" onclick="switchSpatialTab(this, 'disaster-draw')">绘制</button>
+                            </div> --> 
+                            
+                            <div id="disaster-administrative" class="spatial-tab active">
+                                <select style="color: #e5e7eb;">
+                                    <option>选择省份</option>
+                                    <option>北京市</option>
+                                    <option>上海市</option>
+                                    <option>广东省</option>
+                                    <option>江苏省</option>
+                                    <option>浙江省</option>
+                                </select>
+                                <select style="margin-top: 10px;color: #e5e7eb;">
+                                    <option>选择城市</option>
+                                    <option>北京市</option>
+                                    <option>朝阳区</option>
+                                    <option>海淀区</option>
+                                    <option>东城区</option>
+                                    <option>西城区</option>
+                                </select>
+                            </div>
+                            
+                            <div id="disaster-keyword" class="spatial-tab">
+                                <input type="text" placeholder="输入地名或坐标">
+                            </div>
+                            
+                            <div id="disaster-draw" class="spatial-tab">
+                                <div class="map-container">
+                                    [在此绘制区域]
+                                </div>
+                                <div style="margin-top: 10px; display: flex; gap: 5px;">
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">多边形</button>
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">矩形</button>
+                                    <button style="padding: 5px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">清除</button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    <!--  <div class="search-option">
+                        <label>空间范围</label>
+                        <div class="spatial-method">
+                            <div class="spatial-tabs">
+                                <button class="spatial-tab-btn active" onclick="switchSpatialTab(this, 'disaster-administrative')">行政区</button>
+                                <button class="spatial-tab-btn" onclick="switchSpatialTab(this, 'disaster-keyword')">关键字</button>
+                                <button class="spatial-tab-btn" onclick="switchSpatialTab(this, 'disaster-draw')">绘制</button>
+                            </div>
+                            
+                            <div id="disaster-administrative" class="spatial-tab active">
+                                <select>
+                                    <option>选择省份</option>
+                                    <option>北京市</option>
+                                    <option>上海市</option>
+                                    <option>广东省</option>
+                                    <option>江苏省</option>
+                                    <option>浙江省</option>
+                                </select>
+                                <select style="margin-top: 10px;">
+                                    <option>选择城市</option>
+                                    <option>北京市</option>
+                                    <option>朝阳区</option>
+                                    <option>海淀区</option>
+                                    <option>东城区</option>
+                                    <option>西城区</option>
+                                </select>
+                            </div>
+                            
+                            <div id="disaster-keyword" class="spatial-tab">
+                                <input type="text" placeholder="输入地名或坐标">
+                            </div>
+                            
+                            <div id="disaster-draw" class="spatial-tab">
+                                <div class="map-container">
+                                    [在此绘制区域]
+                                </div>
+                                <div style="margin-top: 10px; display: flex; gap: 5px;">
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">多边形</button>
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">矩形</button>
+                                    <button style="padding: 5px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">清除</button>
+                                </div>
+                            </div>
+                        </div>
+                        -->
+                  
+                    </div>
+                    
+                    <!-- 灾害类别 -->
+                    <div class="search-option">
+                        <label>灾害类别</label>
+                        <select style="color: #e5e7eb;">
+                            <option>选择灾害类型</option>
+                            <option>地震</option>
+                            <option>洪水</option>
+                            <option>台风</option>
+                            <option>干旱</option>
+                            <option>森林火灾</option>
+                            <option>滑坡/泥石流</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 灾害规模 -->
+                    <div class="search-option">
+                        <label>灾害规模</label>
+                        <select style="color: #e5e7eb;">
+                            <option>选择灾害规模</option>
+                            <option>小型</option>
+                            <option>中型</option>
+                            <option>大型</option>
+                            <option>特大型</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="search-actions">
+                        <button class="reset-btn" onclick="resetSearch('disaster')">重置</button>
+                        <button class="search-btn" onclick="doSearch('disaster')">检索</button>
+                    </div>
+                </ul>
+            </div>
+            
+            <!-- 产品数据 -->
+            <div class="search-category" id="searchCategory3">
+                <div class="category-title" onclick="toggleCategory(this)">
+                    <div class="category-icon">📦</div>
+                    <!-- <a href="#prodData" class="text-dark hover:text-primary font-medium transition-colors flex items-center"> -->
+                <span>产品数据</span>
+                        <!-- <i class="fa fa-angle-down ml-1 text-sm transition-transform group-hover:rotate-180"></i> -->
+                    </a>
+                    <!-- <span>产品数据</span> -->
+                </div>
+                <ul class="service-list">
+                    <!-- 时间范围 -->
+                    <div class="search-option">
+                        <label>时间范围</label>
+                        <div class="date-range">
+                            <input type="date" placeholder="开始日期">
+                            <input type="date" placeholder="结束日期">
+                        </div>
+                    </div>
+                     <div class="search-option">
+                    <label>地图绘制</label>
+                        <div class="btn-row">
+                            <button class="butClass" id="drawPolygon" onclick="toggleButton('drawPolygon')">绘制面</button>
+                            <button class="butClass" id="clearAll" onclick="toggleButton('clearAll')">清除所有</button>
+                        </div>
+
+                     </div>
+                    <!-- 空间范围 -->
+                    <div class="search-option">
+                        <label>空间范围</label>
+                        <div class="spatial-method">
+                          
+                            
+                            <div id="product-administrative" class="spatial-tab active">
+                                <select style="color: #e5e7eb;">
+                                    <option>选择省份</option>
+                                    <option>北京市</option>
+                                    <option>上海市</option>
+                                    <option>广东省</option>
+                                    <option>江苏省</option>
+                                    <option>浙江省</option>
+                                </select>
+                                <select style="margin-top: 10px; color: #e5e7eb">
+                                    <option>选择城市</option>
+                                    <option>北京市</option>
+                                    <option>朝阳区</option>
+                                    <option>海淀区</option>
+                                    <option>东城区</option>
+                                    <option>西城区</option>
+                                </select>
+                            </div>
+                            
+                            <div id="product-keyword" class="spatial-tab">
+                                <input type="text" placeholder="输入地名或坐标">
+                            </div>
+                            
+                            <div id="product-draw" class="spatial-tab">
+                                <div class="map-container">
+                                    [在此绘制区域]
+                                </div>
+                                <div style="margin-top: 10px; display: flex; gap: 5px;">
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">多边形</button>
+                                    <button style="padding: 5px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">矩形</button>
+                                    <button style="padding: 5px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">清除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 卫星源 -->
+                    <div class="search-option">
+                        <label>卫星类型</label>
+                        <select style="color: #e5e7eb;">
+                            <option>选择卫星类型</option>
+                            <option>高分系列</option>
+                            <option>资源系列</option>
+                            <option>环境系列</option>
+                            <option>Landsat系列</option>
+                            <option>Sentinel系列</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 产品类别 -->
+                    <div class="search-option">
+                        <label>产品类别</label>
+                        <select style="color: #e5e7eb;">
+                            <option>选择产品类别</option>
+                            <option>原始数据</option>
+                            <option>处理数据</option>
+                            <option>分析报告</option>
+                            <option>专题图件</option>
+                            <option>监测产品</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="search-actions">
+                        <button class="reset-btn" onclick="resetSearch('product')">重置</button>
+                        <button class="search-btn" onclick="doSearch('product')">检索</button>
+                    </div>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 主内容区域 -->
+		
+
+        <div class="content">
+            
+            <!-- <div class="content-card"> -->
+               
+
+                  <div id="geoInfoPanel" style="width: 600px; position:absolute; bottom:53px; right:10px; background:rgba(255,255,255,0.3); padding:5px; color:white; border-radius:3px;z-index:1">
+	  <div>
+		地图级别: <span id="zoomLevel">--</span> 
+		比例尺: 1:<span id="mapScale">--</span>
+		坐标: <span id="coordinate">--, --</span>
+	  </div>
+	    
+	
+		
+  </div>
+  
+  <!-- list表格 -->
+	         
+		   <div>
+		   <el-table id="myTable"  :data="userList" style="width: 440px;height:400px; position:absolute; 
+		   top:140px; right:0px; background:rgba(255,255,255,0.3); padding:5px; color:#000;z-index:1"
+		   :header-cell-style="{background:'#534f4fcc', color:'#FFF',fontSize:'10px'}"
+		   @selection-change="handleSelectionChange"
+		   :row-style="{ height: '0' }"
+               :cell-style="{ padding: '0', background:'#534f4fcc',color:'#FFF',fontSize:'10px'}"
+		   >
+              <el-table-column type="selection" width="55"></el-table-column>
+                <el-table-column prop="ncName" label="名称"  width="200"></el-table-column>
+                  <el-table-column prop="id"  width="10"></el-table-column>
+                  <el-table-column prop="ncGeometry" label="形状"  width="200"></el-table-column>
+            </el-table>
+			</div>
+    </div>
+
+                  <script type="module">
+				  
+				  
+				  
+    // Your access token can be found at: https://ion.cesium.com/tokens.
+    // This is the default access token from your ion account
+	
+	import { draw } from './js/draw.js' // 我的ts文件
+	
+	class EarthRotator {
+		constructor(viewer) {
+			this.viewer = viewer;
+			this.rotateActive = false;
+			this.delta = 0.001; // 每帧旋转角度
+		}
+
+		start() {
+			this.rotateActive = true;
+			this.viewer.scene.postUpdate.addEventListener(this.rotate);
+		}
+
+		stop() {
+			this.rotateActive = false;
+			this.viewer.scene.postUpdate.removeEventListener(this.rotate);
+		}
+
+		rotate = () => {
+			if (this.rotateActive) {
+				viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
+			}
+		};
+	}
+	
+
+	
+	const inactiveColor = Cesium.Color.fromBytes(51, 153, 204);
+	const activeColor = Cesium.Color.RED;
+	
+	Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyZjU4YmI5NS0xOTkxLTQyMWItOWE2ZS1hZGNhYTU1YzRlNTQiLCJpZCI6MzE4MTAyLCJpYXQiOjE3NTE1MjkwMDR9.8WjfY2pPzxw6kVxpSk6a0PHycFOUUcb4jyNh9j8lpW4';
+	
+		const entities = new Map();
+	const primitives = new Map();
+	const billboards = new Map();
+	const timer = new Array();
+	let currentIndex = 0;
+	
+	const viewer = new Cesium.Viewer("cesiumContainer", {
+		geocoder: false, // 地理编码搜索框
+        homeButton: false, // 主页按钮
+		baseLayerPicker: false, // 底图选择器,
+		fullscreenButton: false,
+	});
+	
+	const gdBasicLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
+	  url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+	  style: 'default',
+	  format: 'image/png',
+	  tileMatrixSetID: 'GoogleMapsCompatible',
+	}));
+
+	// 加载高德地图影像地理标签
+	const gdLabelLayer = new Cesium.ImageryLayer(new Cesium.UrlTemplateImageryProvider({
+	  url: 'http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
+	  style: 'default',
+	  format: 'image/jpeg',
+	  tileMatrixSetID: 'GoogleMapsCompatible',
+	}));
+
+	//viewer.imageryLayers.add(gdBasicLayer);
+	//viewer.imageryLayers.add(gdLabelLayer);
+	
+	const tdtKey = 'a090fdbe1ebf350ab3eba3adef7d3417';
+	// 加载天地图影像底图
+	const tdtBasicLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
+	  url: `http://t0.tianditu.gov.cn/img_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=img&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
+	  layer: "tdtBasicLayer",
+	  style: "default",
+	  format: "image/jpeg",
+	  tileMatrixSetID: "GoogleMapsCompatible",
+	}));
+
+	// 加载天地图影像地理标签
+	const tdtLabelLayer = new Cesium.ImageryLayer(new Cesium.WebMapTileServiceImageryProvider({
+	  url: `http://t0.tianditu.gov.cn/cia_w/wmts?service=wmts&request=GetTile&version=1.0.0&LAYER=cia&tileMatrixSet=w&TileMatrix={TileMatrix}&TileRow={TileRow}&TileCol={TileCol}&style=default&format=tiles&tk=${tdtKey}`,
+	  layer: "tdtAnnoLayer",
+	  style: "default",
+	  format: "image/jpeg",
+	  tileMatrixSetID: "GoogleMapsCompatible",
+	}));
+
+	viewer.imageryLayers.add(tdtBasicLayer);
+	viewer.imageryLayers.add(tdtLabelLayer);
+	
+	viewer.cesiumWidget.creditContainer.style.display = "none";
+	
+	const layers = viewer.scene.imageryLayers;
+	
+	// 抗锯齿
+    viewer.scene.fxaa = true;
+    viewer.scene.postProcessStages.fxaa.enabled=false;
+    // 水雾特效
+    viewer.scene.globe.showGroundAtmosphere = true;
+    // 设置最大俯仰角，[-90,0]区间内，默认为-30，单位弧度
+    viewer.scene.screenSpaceCameraController.constrainedPitch = Cesium.Math.toRadians(-20);
+    viewer.scene.screenSpaceCameraController.autoResetHeadingPitch = false;
+    viewer.scene.screenSpaceCameraController.inertiaZoom = 0.5;
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
+    viewer.scene.screenSpaceCameraController.maximumZoomDistance = 20000000;
+	
+	viewer.scene.globe.depthTestAgainstTerrain = false;
+
+
+    // Fly the camera to San Francisco at the given longitude, latitude, and height.
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(103.84, 31.15, 9500000),
+      /*orientation: {
+        heading: Cesium.Math.toRadians(0.0),
+        pitch: Cesium.Math.toRadians(-15.0),
+      }*/
+    });	
+	
+	
+	// 使用示例
+	//const rotator = new EarthRotator(viewer);
+	//rotator.start();
+
+	// 点击停止
+	viewer.screenSpaceEventHandler.setInputAction(() => {
+		//if (rotator) {
+		//	rotator.stop();
+		//}
+	}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+	
+	const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+	handler.setInputAction(movement => {
+	  const cartesian = viewer.scene.globe.pick(
+		viewer.camera.getPickRay(movement.endPosition),
+		viewer.scene
+	  );
+	  if (!cartesian) {
+		return;
+	  }
+	  const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+	  const lon = Cesium.Math.toDegrees(cartographic.longitude);
+	  const lat = Cesium.Math.toDegrees(cartographic.latitude);
+	  document.getElementById('coordinate').textContent = lon + ',' + lat;
+	}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+	
+	viewer.scene.postRender.addEventListener(() => {
+	  // 更新层级
+	  document.getElementById('zoomLevel').textContent = getZoomLevel(viewer);
+	  
+	  // 更新比例尺
+	  const scale = calculateScaleDenominator(viewer);
+	  document.getElementById('mapScale').textContent = Math.round(scale.scale);
+	  
+	  // 坐标通过独立事件更新（避免频繁计算）
+	});
+
+	/*viewer.resolutionScale = 0.7;
+	viewer.scene.fxaa = false;
+	viewer.scene.postProcessStages.fxaa.enabled = false;*/
+	
+	window.addEventListener('message', (event) => {
+	console.log("event.data.operation",event.data.operation)
+		// 验证来源以确保安全
+		//if (event.origin !== 'http://192.168.0.36') 
+		//	return;
+		console.log('Received data:', event.data);
+		if (event.data.operation == 'startDrawing') {
+			drawer.cleanup();
+			drawer.startDrawing();
+		} else if (event.data.operation == 'drawPolygon') {
+			draw(viewer, 'Rectangle', { continueDraw: false, removeLast: false }, entity => {
+			  console.log('👉 ~ 多边形实体:', entity)
+			});
+		} else if (event.data.operation == 'cleanup') {
+			viewer.entities.removeAll();
+			viewer.scene.primitives.removeAll();
+			primitives.clear();
+		} else if (event.data.operation == 'findPosition') {
+			getCoordinatesFromAddr(event.data.position);
+		} else if (event.data.operation == 'searchPosition') {
+			loadGeoJson(event.data.position);
+		} else if (event.data.operation == 'loadImgResult') {
+			loadImgResult(event.data.imgAddr, event.data.leftUpPos, event.data.rightBottomPos, event.data.id);
+		} else if (event.data.operation == 'active') {
+			activePrimitive(event.data.id);
+		} else if (event.data.operation == 'inactive') {
+			inactivePrimitive(event.data.id);
+		} else if (event.data.operation == 'flyToCoordinates') {
+			var lon = parseFloat(event.data.longitude);
+			var lat = parseFloat(event.data.latitude);
+			if (isFinite(lon) && isFinite(lat)) {
+				viewer.camera.flyTo({
+					destination: Cesium.Cartesian3.fromDegrees(lon, lat, 2000000),
+					duration: 2.0
+				});
+			}
+		}
+
+	});
+	
+	document.getElementById('drawPolygon').addEventListener('click', function() {
+	  //绘制矩形
+		// document.getElementById('drawPolygon').style.background = "#FFF";
+		 //document.getElementById('clearAll').style.background = "#FFF";
+        document.getElementById('drawPolygon').classList.add('is-active')
+        const clearButton = document.getElementById('clearAll');
+        if (clearButton) {
+          clearButton.classList.remove('is-active');
+        }
+		 draw(viewer, 'Rectangle', { continueDraw: false, removeLast: false }, entity => {
+			  console.log('👉 ~ 多边形实体:', entity)
+			});
+
+        })
+		
+	function getCoordinatesFromAddr(addr) {
+		return fetch(`http://api.tianditu.gov.cn/geocoder?ds={"keyWord":"${addr}"}&tk=${tdtKey}`)
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				if (data.status === '0' && data.location) {
+					console.log(data.location);
+					return {lng: data.location.lng, lat: data.location.lat};
+				} else {
+					alert("未知的地点");
+				}
+			});
+	}
+	
+	function removeByFixedStep(arr, step = 2) {
+	  return arr.filter((_, index) => index % step == 0);
+	}
+	
+	function calculateScaleForBounds(viewer, minLon, minLat, maxLon, maxLat) {
+	  const ellipsoid = viewer.scene.globe.ellipsoid;
+	  const centerLat = (minLat + maxLat) / 2; // 中心纬度减少误差
+	  
+	  // 计算地理距离
+	  const geodesic = new Cesium.EllipsoidGeodesic();
+	  const start = Cesium.Cartographic.fromDegrees(minLon, centerLat);
+	  const end = Cesium.Cartographic.fromDegrees(maxLon, centerLat);
+	  geodesic.setEndPoints(start, end);
+	  const distance = geodesic.surfaceDistance;
+	  
+	  // 获取视图像素宽度
+	  const pixelWidth = viewer.scene.canvas.clientWidth;
+	  
+	  // 计算比例尺分母
+	  const resolution = distance / pixelWidth;
+	  const scaleDenominator = (96 * resolution) / 0.0254;
+	  console.log(scaleDenominator);
+	  return scaleDenominator;
+	}
+	
+	function flyToPositions(positions, minLng, minLat, maxLng, maxLat) {
+		const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
+		const cartographic = Cesium.Cartographic.fromCartesian(center);
+		const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+		const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+		viewer.camera.flyTo({
+			destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+		});
+	}
+	
+	function drawOutline(positions, id) {
+		const outlinePrimitive = new Cesium.Primitive({
+		  geometryInstances: new Cesium.GeometryInstance({
+			id: id + '-Outline',
+			geometry:new Cesium.PolygonOutlineGeometry({
+			  polygonHierarchy: new Cesium.PolygonHierarchy(
+				Cesium.Cartesian3.fromDegreesArray(positions)
+			  ),
+			  width: 10.0,              
+			  height: 2 * primitives.size + 0.1,
+			  vertexFormat: Cesium.PolylineColorAppearance.VERTEX_FORMAT
+			}),
+			attributes: {
+				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+				  activeColor // 红色线条
+				)
+			  }
+		  }),
+		  releaseGeometryInstances: false,
+		  asynchronous: false,
+		  appearance: new Cesium.PolylineColorAppearance()
+		});
+		
+		viewer.scene.primitives.add(outlinePrimitive);		
+		
+		return outlinePrimitive;
+	}
+	
+	function activePrimitive(id) {
+		for (let [key, value] of primitives) {
+			if (id == key) {
+				value[0].show = true;
+				// 获取目标primitive的geometryInstances
+				const instances = value[1].geometryInstances;
+				const newInstance = new Cesium.GeometryInstance({
+					id: key + '-Outline',
+					geometry: instances.geometry,
+					attributes: {
+						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+							activeColor
+						)
+					}
+				});
+				viewer.scene.primitives.remove(value[1]);
+				value[1] = new Cesium.Primitive({
+					geometryInstances: newInstance,
+					releaseGeometryInstances: false,
+					asynchronous: false,
+					appearance: new Cesium.PolylineColorAppearance({
+						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+						translucent: true,
+						renderState: {
+							depthTest: { enabled: false },
+							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+						}
+					})
+				});
+				viewer.scene.primitives.add(value[1]);
+				value[1].show = true;
+			} else {
+				const instances = value[1].geometryInstances;
+				const newInstance = new Cesium.GeometryInstance({
+					id: key + '-Outline',
+					geometry: instances.geometry,
+					attributes: {
+						color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+							inactiveColor
+						)
+					}
+				});
+				viewer.scene.primitives.remove(value[1]);
+				value[1].destroy();
+				value[1] = null;
+				value[1] = new Cesium.Primitive({
+					geometryInstances: newInstance,
+					releaseGeometryInstances: false,
+					asynchronous: false,
+					appearance: new Cesium.PolylineColorAppearance({
+						color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+						translucent: true,
+						renderState: {
+							depthTest: { enabled: false },
+							lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+						}
+					})
+				});
+				viewer.scene.primitives.add(value[1]);
+				value[1].show = true;
+			}
+		}
+	}
+	
+	function inactivePrimitive(id) {
+		let primitive = primitives.get(id);
+		primitive[0].show = false;
+		const instances = primitive[1].geometryInstances;
+		const newInstance = new Cesium.GeometryInstance({
+			id: id + '-Outline',
+			geometry: instances.geometry,
+			attributes: {
+				color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+					inactiveColor
+				)
+			}
+		});
+		viewer.scene.primitives.remove(primitive[1]);
+		primitive[1].destroy();
+		primitive[1] = null;
+		primitive[1] = new Cesium.Primitive({
+			geometryInstances: newInstance,
+			releaseGeometryInstances: false,
+			asynchronous: false,
+			appearance: new Cesium.PolylineColorAppearance({
+				color: new Cesium.ColorGeometryInstanceAttribute(0.0, 0.0, 0.0, 1.0),
+				translucent: true,
+				renderState: {
+					depthTest: { enabled: false },
+					lighting: { enabled: false }  // 关键配置‌:ml-citation{ref="1,5" data="citationList"}
+				}
+			})
+		});
+		viewer.scene.primitives.add(primitive[1]);
+		primitive[1].show = true;
+	}
+	
+	
+	
+	function loadImgResultUseEntity(imgAddr, leftUpPos, rightBottomPos, id) {
+		/*const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];*/
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		const positions = [minLng, minLat, maxLng, maxLat]
+		
+		if (!entities.get(id)) {
+			const rectangle = viewer.entities.add({
+				name: 'Multiple Img Result',
+				rectangle: {
+					coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, rightBottomPos.lat),
+					material: new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: imgAddr,
+						transparent: true
+					}),
+					height: 0,
+					outline: true,
+					outlineColor: activeColor,
+					outlineWidth: 10,
+					clampToGround: false	
+				}
+			});
+			entities.set(id, {entity: rectangle, imgAddr: imgAddr});
+		} else {
+			for (let [key, value] of entities) {
+				if (key == id) {	
+					value.entity.rectangle.outlineColor = activeColor;
+					value.entity.rectangle.material = new Cesium.ImageMaterialProperty({
+						//添加回调
+						image: value.imgAddr,
+						transparent: true
+					});
+				} else {
+					value.entity.rectangle.outlineColor = inactiveColor;
+				}
+			}
+		}
+		
+		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+	}
+	
+	function inactiveImgResultUseEntity(id) {
+		for (let [key, value] of entities) {
+			if (key == id) {
+				value.entity.rectangle.material = Cesium.Color.WHITE.withAlpha(0);
+				value.entity.rectangle.outlineColor = inactiveColor;
+			}
+		}
+	}
+	
+	
+	function loadGeoJson(addr) {
+		Cesium.GeoJsonDataSource.load('./res/test.geojson', {
+			  stroke: inactiveColor,
+			  fill: Cesium.Color.WHITE.withAlpha(0.5)
+		  }).then(dataSource => {
+		  viewer.dataSources.add(dataSource);
+		  dataSource.entities.values.forEach(entity => {
+			if (entity.polygon) {
+			  const positions = entity.polygon.hierarchy.getValue().positions;
+			  /*entity.polyline = new Cesium.PolylineGraphics({
+				positions: positions,
+				width: 3,
+				material: activeColor.withAlpha(0.8),
+				clampToGround: true
+			  });*/
+			  //entity.polygon.fill = false; // 隐藏填充面
+			  
+			  let minLng, minLat, maxLng, maxLat = null;
+			  for (let position of positions) {
+				const cartographic = Cesium.Cartographic.fromCartesian(position);
+				const longitude = Cesium.Math.toDegrees(cartographic.longitude); // 经度
+				const latitude = Cesium.Math.toDegrees(cartographic.latitude);   // 纬度
+				if (!minLng || longitude < minLng) {
+					minLng = longitude;
+				}
+				if (!minLat || latitude < minLat) {
+					minLat = latitude;
+				}
+				if (!maxLng || longitude > maxLng) {
+					maxLng = longitude;
+				}
+				if (!maxLat || latitude > maxLat) {
+					maxLat = latitude;
+				}
+			  }
+			  
+			  const center = Cesium.BoundingSphere.fromPoints(positions).center;
+			  const cartographic = Cesium.Cartographic.fromCartesian(center);
+			  const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+			  const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+			  viewer.camera.flyTo({
+				destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+			  });
+			}
+		  });
+		}).catch(error => console.error('加载失败:', error));
+	}
+	
+	function loadImgResult(imgAddr, leftUpPos, rightBottomPos, id) {
+		const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat, 
+						rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat];
+		
+		let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+		let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+		let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+		let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+		
+		if (!primitives.get(id)) {				
+			const instances = [new Cesium.GeometryInstance({
+				id: id,
+				geometry: new Cesium.PolygonGeometry({
+					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
+					height: 10 * primitives.size,
+					perPositionHeight: false
+				}),
+				attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
+			})];
+			const imgPrimitive = new Cesium.Primitive({
+				id: id,
+				geometryInstances: instances,
+				releaseGeometryInstances: false,
+				asynchronous: false,
+				appearance: new Cesium.EllipsoidSurfaceAppearance({
+					material: new Cesium.Material({
+					  fabric: {
+						type: 'Image', // 指定图片类型材质:ml-citation{ref="5,6" data="citationList"}
+						uniforms: {
+						  image: imgAddr
+						}
+					  }
+					}),
+					flat: true
+				})
+			});
+			
+			viewer.scene.primitives.add(imgPrimitive);
+			
+			const outlinePrimitive = drawOutline(positions, id);
+			
+			
+			const collection = new Cesium.PrimitiveCollection();
+			collection.add(imgPrimitive);
+			collection.add(outlinePrimitive);
+
+			Promise.all([imgPrimitive.readyPromise, outlinePrimitive.readyPromise])
+			  .then(() => {
+				primitives.set(id, [imgPrimitive, outlinePrimitive]);
+				activePrimitive(id);	
+			  })
+			  .catch(error => {
+				console.error("加载失败:", error);
+			  });
+			const checkInterval = setInterval(() => {
+			  if (collection.ready) {
+				clearInterval(checkInterval);
+				primitives.set(id, [imgPrimitive, outlinePrimitive]);
+				activePrimitive(id);		
+				console.log('所有Primitive加载完成');
+			  }
+			}, 100);
+		} else {
+			activePrimitive(id);						
+		}	
+
+		flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+	}
+	
+	function searchPosition(addr) {
+		return fetch(`./res/test.json`)
+			.then(response => response.json())
+			.then(data => {
+				let coordinates = data.geometry.coordinates[0][0];
+				let positions = [];
+				let minLng, minLat, maxLng, maxLat = null;
+				for (let coordinate of coordinates) {
+					positions.push(coordinate[0]);
+					positions.push(coordinate[1]);
+					if (!minLng || coordinate[0] < minLng) {
+						minLng = coordinate[0];
+					}
+					if (!minLat || coordinate[1] < minLat) {
+						minLat = coordinate[1];
+					}
+					if (!maxLng || coordinate[0] > maxLng) {
+						maxLng = coordinate[0];
+					}
+					if (!maxLat || coordinate[1] > maxLat) {
+						maxLat = coordinate[1];
+					}
+				}
+								
+				console.log(Cesium.Cartesian3.fromDegreesArray(positions));
+				/*const polygon = viewer.entities.add({
+                    polygon: {
+                        positions: Cesium.Cartesian3.fromDegreesArray(positions),
+						height: 0,
+                        perPositionHeight: false,
+                        material: activeColor.withAlpha(1),
+                        outline: true,
+                        outlineColor: inactiveColor,
+                        outlineWidth: 1
+                    }
+                });			
+
+				console.log(polygon);*/
+				
+				const instances = [new Cesium.GeometryInstance({
+				  geometry: new Cesium.PolygonGeometry({
+					polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(positions)),
+					height: 0,
+					perPositionHeight: false
+				  }),
+				  attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(activeColor.withAlpha(0.5)) }
+				})];
+				viewer.scene.primitives.add(new Cesium.Primitive({
+				  geometryInstances: instances,
+				  appearance: new Cesium.PerInstanceColorAppearance({
+					flat: true, // 关键！
+					translucent: true,
+					renderState: {
+					  lineWidth: 3, // 设置边框粗细
+					  lineColor: activeColor
+					}
+				  })
+				}));
+												
+				const center = Cesium.BoundingSphere.fromPoints(Cesium.Cartesian3.fromDegreesArray(positions)).center;
+				const cartographic = Cesium.Cartographic.fromCartesian(center);
+				const centerLat = Cesium.Math.toDegrees(cartographic.latitude);
+				const centerLng = Cesium.Math.toDegrees(cartographic.longitude);
+				
+				viewer.camera.flyTo({
+				  destination: Cesium.Cartesian3.fromDegrees(centerLng, centerLat, calculateScaleForBounds(viewer, minLng, minLat, maxLng, maxLat)),
+				});
+			});
+	}
+	
+	function getZoomLevel(viewer) {
+	  const height = viewer.camera.positionCartographic.height;
+	  return Math.ceil(21 - Math.log(height / 1000) / Math.LN2) - 4; // 层级公式
+	}
+
+	function calculateScaleDenominator(viewer) {
+	  let scale = null;
+	  let centerX = viewer._lastWidth / 2;
+	  let centerY = viewer._lastHeight / 2;
+	  let cartesian2 = new Cesium.Cartesian2(centerX, centerY);
+	  let ray = viewer.camera.getPickRay(cartesian2);
+	  let cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+	  if (cartesian) {
+		let boundingSphere = new Cesium.BoundingSphere();
+		boundingSphere.center = cartesian;
+		boundingSphere.radius = 0.1;
+		let resolution = viewer.scene.camera.getPixelSize(
+		  boundingSphere, 
+		  viewer.scene.context.drawingBufferWidth,
+		  viewer.scene.context.drawingBufferHeight
+		);
+		scale = (96 * resolution) / 0.0254;
+		return { scale: scale, resolution: resolution };
+	  } else {
+		return { scale: '-', resolution: '-' };
+	  }
+	}
+
+	function getResolution(scale) {
+	  return scale * 0.0254 / 96; // 96为屏幕DPI, 0.0254英寸转米
+	}
+	
+	
+document.getElementById('myTable').addEventListener('change', function() {
+
+  console.log('Selected value:');
+   // 1. 找到被点击的行元素
+  const clickedRow = event.target.closest('tr');
+  const rowData = Array.from(clickedRow.children).map(cell => cell.textContent);
+  const checkbox = event.target;
+  if (!checkbox.checked) {
+    console.log("quxiao")
+	const row = checkbox.closest('tr');
+	
+	inactiveImgResultUseEntity(rowData[2])
+  }
+  else{
+  
+  
+  // 2. 排除表头行
+  if (!clickedRow || clickedRow.parentElement.tagName === 'THEAD') return;
+  
+  // 3. 清除之前选中的行样式
+  const prevSelected = table.querySelector('.selected');
+  if (prevSelected) prevSelected.classList.remove('selected');
+  // 4. 添加选中样式并获取数据
+  clickedRow.classList.add('selected');
+  
+   const ncGeometry =   JSON.parse(rowData[3])
+   console.log("ncGeometry",ncGeometry)
+  const coordinates = ncGeometry.coordinates[0]
+  const imgAddr = buildApiUrl("/rest/nc/file/" + rowData[2])
+  console.log(imgAddr)
+  const leftUpPos = {lon:coordinates[0][0],lat:coordinates[2][1]}
+  const rightBottomPos = {lon:coordinates[2][0],lat:coordinates[0][1]}
+  
+   
+  const id = rowData[2]
+  let imgAddrArr = [imgAddr]
+  console.log("leftUpPos",leftUpPos,rightBottomPos)
+  loadImgResultUseEntity(imgAddr,leftUpPos,rightBottomPos,id)
+   //loadMulImgResult(imgAddrArr, leftUpPos, rightBottomPos)
+  // loadImgResult(imgAddr,leftUpPos,rightBottomPos,id)
+  }
+});
+
+
+    	function loadImage(url) {
+							return new Promise((resolve, reject) => {
+								const img = new Image();
+								img.crossOrigin = "anonymous";
+								img.src = url;
+								img.onload = () => resolve(img);
+								img.onerror = reject;
+							});
+						}
+						async function imageArrayToCanvasArray(imageUrls) {
+							return Promise.all(imageUrls.map(async (url) => {
+								const img = await loadImage(url);
+								const canvas = document.createElement('canvas');
+								canvas.width = img.width;
+								canvas.height = img.height;
+								const ctx = canvas.getContext('2d');
+								ctx.drawImage(img, 0, 0);
+								return canvas;
+							}));
+						}
+                  function cleanup() {
+							viewer.entities.removeAll();
+							viewer.scene.primitives.removeAll();
+							primitives.clear();
+							for (let t of timer) {
+								window.clearInterval(t);
+							}
+							timer.length = 0;
+							currentIndex = 0;
+						}
+	function loadMulImgResult(imgAddrArr, leftUpPos, rightBottomPos) {
+							cleanup();
+							viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+							let currentIndex = 0;
+							let minLng = Math.min(leftUpPos.lon, rightBottomPos.lon);
+							let maxLng = Math.max(leftUpPos.lon, rightBottomPos.lon);
+							let minLat = Math.min(leftUpPos.lat, rightBottomPos.lat);
+							let maxLat = Math.max(leftUpPos.lat, rightBottomPos.lat);
+							const positions = [leftUpPos.lon, leftUpPos.lat, rightBottomPos.lon, leftUpPos.lat,
+								rightBottomPos.lon, rightBottomPos.lat, leftUpPos.lon, rightBottomPos.lat
+							];
+							imageArrayToCanvasArray(imgAddrArr).then(imgList => {
+								console.log(imgList);
+								const rectangle = viewer.entities.add({
+									name: 'Multiple Img Result',
+									rectangle: {
+										coordinates: Cesium.Rectangle.fromDegrees(leftUpPos.lon, leftUpPos.lat,
+											rightBottomPos.lon, rightBottomPos.lat),
+										material: new Cesium.ImageMaterialProperty({
+											//添加回调
+											image: imgList[currentIndex],
+											transparent: true
+										})
+									}
+								});
+								flyToPositions(positions, minLng, minLat, maxLng, maxLat);
+								let t = window.setInterval(() => {
+									currentIndex = (currentIndex + 1) % imgList.length;
+									rectangle.rectangle.material = new Cesium.ImageMaterialProperty({
+										image: imgList[currentIndex],
+										transparent: true
+									});
+									viewer.scene.requestRender();
+								}, 1000);
+								timer.push(t);
+							});
+						}
+
+function markPosition(lon, lat) {
+							for (let [key, value] of primitives) {
+								value.show = false;
+								viewer.scene.primitives.remove(value);
+							}
+							primitives.clear();
+							const billboards = viewer.scene.primitives.add(new Cesium.BillboardCollection());
+							const billboard = billboards.add({
+								image: "./res/position.png",
+								position: Cesium.Cartesian3.fromDegrees(lon, lat),
+								width: 50,
+								height: 50
+							});
+							//primitives.set(id, [billboards]);
+							viewer.camera.flyTo({
+								destination: Cesium.Cartesian3.fromDegrees(lon, lat, 5000000)
+							});
+						}
+
+    // 获取表格元素
+const table = document.getElementById('myTable');
+
+// 添加点击事件监听器
+table.addEventListener('click', function(event) {
+ 
+})
+	
+	
+	
+  </script>
+  
+                <!-- 修改后的结果列表，包含收藏功能 -->
+                <div style="max-height: 600px; overflow-y: auto;display:none">
+                    <!-- 示例结果项1 -->
+                    <div class="result-item">
+                        <div class="result-thumbnail">
+                            <div style="width: 100%; height: 100%; background: url('https://cdn.jsdelivr.net/gh/apoorv-projects/earth@main/satellite-image1.jpg') center/cover;"></div>
+                        </div>
+                        <div class="result-info">
+                            <div class="result-title">
+                                北京市朝阳区2023年卫星影像
+                                <button class="favorite-btn" onclick="toggleFavorite(this, 'img1')"></button>
+                            </div>
+                            <div class="result-meta">
+                                <span><span class="icon">🛰️</span> 高分七号</span>
+                                <span><span class="icon">📅</span> 2023-05-15</span>
+                                <span><span class="icon">📏</span> 0.8m分辨率</span>
+                                <span><span class="icon">☁️</span> 云量5%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例结果项2 -->
+                    <div class="result-item">
+                        <div class="result-thumbnail">
+                            <div style="width: 100%; height: 100%; background: url('https://cdn.jsdelivr.net/gh/apoorv-projects/earth@main/satellite-image2.jpg') center/cover;"></div>
+                        </div>
+                        <div class="result-info">
+                            <div class="result-title">
+                                上海市浦东新区2023年卫星影像
+                                <button class="favorite-btn" onclick="toggleFavorite(this, 'img2')"></button>
+                            </div>
+                            <div class="result-meta">
+                                <span><span class="icon">🛰️</span> Sentinel-2</span>
+                                <span><span class="icon">📅</span> 2023-06-20</span>
+                                <span><span class="icon">📏</span> 10m分辨率</span>
+                                <span><span class="icon">☁️</span> 云量2%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例结果项3 -->
+                    <div class="result-item">
+                        <div class="result-thumbnail">
+                            <div style="width: 100%; height: 100%; background: url('https://cdn.jsdelivr.net/gh/apoorv-projects/earth@main/satellite-image3.jpg') center/cover;"></div>
+                        </div>
+                        <div class="result-info">
+                            <div class="result-title">
+                                广东省深圳市2023年卫星影像
+                                <button class="favorite-btn" onclick="toggleFavorite(this, 'img3')"></button>
+                            </div>
+                            <div class="result-meta">
+                                <span><span class="icon">🛰️</span> Landsat 9</span>
+                                <span><span class="icon">📅</span> 2023-04-10</span>
+                                <span><span class="icon">📏</span> 30m分辨率</span>
+                                <span><span class="icon">☁️</span> 云量8%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 更多结果项... -->
+                </div>
+                
+                <div class="pagination" style="display:none">
+                    <button class="page-btn">上一页</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">下一页</button>
+                </div>
+
+                
+            </div>
+        </div>
+    </div>
+    
+	
+   <script>
+	    
+		
+		
+        // 当前活动分类
+        let activeCategory = 'image';
+        
+        // 切换分类展开/折叠
+        function toggleCategory(element) {
+            const list = element.nextElementSibling;
+            list.classList.toggle('expanded');
+            
+            // 更新当前活动分类
+            const categoryName = element.querySelector('span').textContent;
+            if(categoryName === '影像检索服务') {
+                activeCategory = 'image';
+            } else if(categoryName === '极端灾害服务') {
+                activeCategory = 'disaster';
+            } else if(categoryName === '产品数据') {
+                activeCategory = 'product';
+            }
+        }
+		
+		function toggleCategory2(element) {
+           console.log("55555")
+		    // 侧边栏折叠/展开
+        const collapseBtn = document.getElementById('collapseBtn');
+        const sidebar = document.getElementById('sidebar');
+		 const searchCategory = document.getElementById('searchCategory');
+		  const searchCategory2 = document.getElementById('searchCategory2');
+		   const searchCategory3 = document.getElementById('searchCategory3');
+		var element = document.querySelector('.sidebar');
+		
+		
+		   console.log("3333333333")
+            sidebar.classList.toggle('collapsed');  
+			sidebar.style.display = 'block'
+			searchCategory.style.display = ""
+			searchCategory2.style.display = ""
+			searchCategory3.style.display = ""
+			//折叠改变相关颜色
+			if(element.getAttribute('class') == 'sidebar collapsed'){
+			sidebar.style.display = 'block'
+			searchCategory.style.display = 'none'
+			searchCategory2.style.display = 'none'
+			searchCategory3.style.display = 'none'
+			} else{
+
+			}  
+			
+            this.textContent = sidebar.classList.contains('collapsed') ? '≡' : '≡';
+        }
+        
+       
+      
+	  
+
+     
+        
+        // 默认展开第一个分类
+        //document.querySelectorAll('.search-category')[1].querySelector('.service-list').classList.add('expanded');
+        
+        // 切换空间检索方式
+        function switchSpatialTab(btn, tabId) {
+            // 移除当前分类下所有active类
+            const category = btn.closest('.search-category');
+            category.querySelectorAll('.spatial-tab-btn').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            category.querySelectorAll('.spatial-tab').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 添加当前active类
+            btn.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        // 执行检索
+        function doSearch(type) {
+            if(type === 'image' && window._vueApp) {
+                const searchBtn = event.target;
+                const originalText = searchBtn.textContent;
+                searchBtn.textContent = '检索中...';
+                searchBtn.disabled = true;
+                window._vueApp.doSearch();
+                setTimeout(() => {
+                    searchBtn.textContent = originalText;
+                    searchBtn.disabled = false;
+                }, 500);
+            }
+        }
+        
+        // 重置检索条件
+        function resetSearch(type) {
+            if(type === 'image' && window._vueApp) {
+                window._vueApp.resetFilters();
+            }
+            // 重置空间检索选项卡
+            if(type === 'image') {
+                switchSpatialTab(document.querySelector('.search-category:nth-child(2) .spatial-tab-btn'), 'administrative');
+            } else if(type === 'disaster') {
+                switchSpatialTab(document.querySelector('.search-category:nth-child(3) .spatial-tab-btn'), 'disaster-administrative');
+            } else if(type === 'product') {
+                switchSpatialTab(document.querySelector('.search-category:nth-child(4) .spatial-tab-btn'), 'product-administrative');
+            }
+        }
+        
+        // 收藏功能
+        const favorites = {}; // 存储收藏项
+        
+        // 切换收藏状态
+        function toggleFavorite(btn, itemId) {
+            btn.classList.toggle('active');
+            
+            // 获取当前结果项数据
+            const itemElement = btn.closest('.result-item');
+            const title = itemElement.querySelector('.result-title').textContent.trim();
+            const thumbnail = itemElement.querySelector('.result-thumbnail').innerHTML;
+            const metaItems = itemElement.querySelectorAll('.result-meta span');
+            
+            // 构建收藏项数据
+            const metaData = {};
+            metaItems.forEach(meta => {
+                const key = meta.textContent.split(' ')[0];
+                const value = meta.textContent.replace(key, '').trim();
+                metaData[key] = value;
+            });
+            
+            if(btn.classList.contains('active')) {
+                // 添加到收藏
+                favorites[itemId] = {
+                    id: itemId,
+                    title: title.replace('☆', '').replace('★', '').trim(),
+                    thumbnail: thumbnail,
+                    meta: metaData
+                };
+                
+                // 添加动画效果
+                btn.style.transform = 'scale(1.5)';
+                setTimeout(() => {
+                    btn.style.transform = 'scale(1)';
+                }, 300);
+            } else {
+                // 从收藏移除
+                delete favorites[itemId];
+            }
+            
+            // 更新收藏列表
+            //updateFavoriteList();
+        }
+        
+        // 更新收藏列表显示
+        function updateFavoriteList() {
+            const favoriteList = document.getElementById('favorite-list');
+            const noFavorites = favoriteList.querySelector('.no-favorites');
+            
+            // 清空列表
+            favoriteList.innerHTML = '';
+            
+            if(Object.keys(favorites).length === 0) {
+                // 没有收藏项
+                if(!noFavorites) {
+                    favoriteList.appendChild(createNoFavoritesMessage());
+                } else {
+                    favoriteList.appendChild(noFavorites);
+                }
+            } else {
+                // 添加收藏项
+                for(const itemId in favorites) {
+                    const item = favorites[itemId];
+                    const li = document.createElement('li');
+                    li.className = 'service-item';
+                    li.innerHTML = `
+                        <div class="service-icon">⭐</div>
+                        <span>${item.title}</span>
+                    `;
+                    li.onclick = () => viewFavorite(itemId);
+                    favoriteList.appendChild(li);
+                }
+            }
+        }
+        
+        // 创建"无收藏"消息
+        function createNoFavoritesMessage() {
+            const msg = document.createElement('li');
+            msg.className = 'no-favorites';
+            msg.style.padding = '15px';
+            msg.style.color = 'rgba(149, 165, 166, 0.7)';
+            msg.style.textAlign = 'center';
+            msg.textContent = '暂无收藏数据';
+            return msg;
+        }
+        
+        // 查看收藏项详情
+        function viewFavorite(itemId) {
+            const item = favorites[itemId];
+            
+            // 创建模态框
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.right = '0';
+            modal.style.bottom = '0';
+            modal.style.backgroundColor = 'rgba(10, 25, 47, 0.9)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '1000';
+            modal.style.opacity = '0';
+            modal.style.transition = 'opacity 0.3s';
+            
+            modal.innerHTML = `
+                <div style="background: var(--card-bg); border-radius: 10px; padding: 30px; max-width: 800px; width: 90%; border: 1px solid rgba(0, 168, 255, 0.3); box-shadow: 0 10px 50px rgba(0, 168, 255, 0.2); position: relative;">
+                    <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--primary-color); font-size: 20px; cursor: pointer;">×</button>
+                    <h2 style="color: var(--accent-color); margin-bottom: 20px; font-size: 22px;">${item.title}</h2>
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div style="width: 200px; height: 200px; background: rgba(0, 168, 255, 0.1); border-radius: 6px; border: 1px solid rgba(0, 168, 255, 0.2); overflow: hidden;">
+                            ${item.thumbnail}
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <div style="color: var(--primary-color); margin-bottom: 5px;">卫星</div>
+                                    <div>${item.meta['🛰️']}</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--primary-color); margin-bottom: 5px;">时间</div>
+                                    <div>${item.meta['📅']}</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--primary-color); margin-bottom: 5px;">分辨率</div>
+                                    <div>${item.meta['📏']}</div>
+                                </div>
+                                <div>
+                                    <div style="color: var(--primary-color); margin-bottom: 5px;">云量</div>
+                                    <div>${item.meta['☁️']}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button onclick="removeFavorite('${itemId}')" style="padding: 10px 20px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; border-radius: 6px; cursor: pointer; margin-right: 10px;">移除收藏</button>
+                        <button onclick="window.location.href='#'" style="padding: 10px 20px; background: var(--primary-color); color: var(--darker-bg); border: none; border-radius: 6px; cursor: pointer;">查看详情</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        }
+        
+        // 移除收藏项
+        function removeFavorite(itemId) {
+            delete favorites[itemId];
+           // updateFavoriteList();
+            document.querySelector(`.favorite-btn[onclick*="${itemId}"]`).classList.remove('active');
+            document.querySelectorAll('div[style*="position: fixed;"]').forEach(el => el.remove());
+        }
+
+        function collapseAll() {
+            document.getElementById('imgIndexList').classList.remove('expanded');
+            document.getElementById('disasterServierList').classList.remove('expanded');
+            document.getElementById('prodDataList').classList.remove('expanded');
+        }
+
+        // 根据锚点展开对应模块
+        function expandModuleByHash() {
+            const hash = window.location.hash;
+            collapseAll();
+            
+            if (hash === '#imgIndex') {
+                document.getElementById('imgIndexList').classList.add('expanded');
+            } 
+            else if (hash === '#disasterServier') {
+                document.getElementById('disasterServierList').classList.add('expanded');
+            } 
+            else if (hash === '#prodData') {
+                document.getElementById('prodDataList').classList.add('expanded');
+            } 
+            else {
+                // 默认展开影像检索服务
+                document.getElementById('imgIndexList').classList.add('expanded');
+            }
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+          //  updateFavoriteList();
+            
+            const imgList = document.querySelector('.search-category:nth-child(2) .service-list');
+            const disasterList = document.querySelector('.search-category:nth-child(3) .service-list');
+            const productList = document.querySelector('.search-category:nth-child(4) .service-list');
+            
+            imgList.id = 'imgIndexList';
+            disasterList.id = 'disasterServierList';
+            productList.id = 'prodDataList';
+            
+            // 初始设置模块状态
+            //expandModuleByHash();
+            
+            // 监听URL锚点变化
+            window.addEventListener('hashchange', expandModuleByHash);
+        });
+    </script>
+	
+	
+	
+	
+	 <script>
+        const { createApp, ref, reactive } = Vue;
+
+        createApp({
+            setup() {
+                const userList = ref([])
+                const typeList = reactive({
+                    satelliteTypeList: [],
+                    processTypeList: [],
+                    imgTypeList: []
+                })
+                const raw = ref([])
+                const processValue = ref(null)
+                const satelliteType = ref(null)
+                const imgType = ref(null)
+                return {
+                    userList,
+                    raw,
+                    processValue,
+                    imgType,
+                    satelliteType,
+                    typeList
+                }
+            },
+
+            created () {
+                this.showUserList()
+                this.getType()
+                // Expose Vue instance for doSearch bridge
+                window._vueApp = this
+            },
+
+            methods: {
+                handleSelectionChange(val){
+                    const raw = val[0]
+                },
+                showUserList(params){
+                    const data = params || {};
+                    apiClient
+                        .post('/infrared/rest/nc/list', data)
+                        .then((response) => {
+                            this.userList = response.data.ncList || []
+                        })
+                        .catch((error) => {
+                            console.error('数据获取失败', error)
+                        })
+                },
+                getType(){
+                    apiClient
+                        .post('/infrared/rest/nc/getType', {})
+                        .then((response) => {
+                            this.typeList.satelliteTypeList = response.data.satelliteTypeList || []
+                            this.typeList.processTypeList = response.data.processTypeList || []
+                            this.typeList.imgTypeList = response.data.imgTypeList || []
+                        })
+                        .catch((error) => {
+                            console.error('类型获取失败', error)
+                        })
+                },
+                doSearch(){
+                    const params = {};
+                    if (this.satelliteType) params.satellite_type = this.satelliteType;
+                    if (this.processValue) params.process_type = this.processValue;
+                    if (this.imgType) params.img_type = this.imgType;
+                    this.showUserList(params);
+                },
+                resetFilters(){
+                    this.satelliteType = null;
+                    this.processValue = null;
+                    this.imgType = null;
+                    this.showUserList();
+                }
+            }
+        }).use(ElementPlus).mount('#app')
+    </script>
+	
+	
+	
+		
+
+	
+	</div>
+<script src="js/ai-chat-panel.js"></script>
+</body>
+</html>

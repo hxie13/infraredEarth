@@ -6,7 +6,7 @@ import cn.ac.sitp.infrared.datasource.mapper.NaturalDisasterMapper;
 import cn.ac.sitp.infrared.service.NaturalDisasterService;
 import cn.ac.sitp.infrared.service.StoredFileResolver;
 import cn.ac.sitp.infrared.util.Util;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -15,13 +15,11 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class NaturalDisasterServiceImpl implements NaturalDisasterService {
 
-    @Autowired
-    private NaturalDisasterMapper naturalDisasterMapper;
-
-    @Autowired
-    private StoredFileResolver storedFileResolver;
+    private final NaturalDisasterMapper naturalDisasterMapper;
+    private final StoredFileResolver storedFileResolver;
 
     @Override
     public Map<String, Object> getNaturalDisasterList(int currPage, int pageSize, Date beginDate, Date endDate,

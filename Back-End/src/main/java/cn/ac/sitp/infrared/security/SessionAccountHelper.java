@@ -58,12 +58,12 @@ public final class SessionAccountHelper {
         target.setType(source.getType());
         target.setSignature(source.getSignature());
         target.setClinicPermissions(source.getClinicPermissions());
-        target.setFailure_count(source.getFailure_count());
+        target.setFailureCount(source.getFailureCount());
         target.setUpdatetime(source.getUpdatetime());
-        target.setExpiration_time(source.getExpiration_time());
-        target.setLock_time(source.getLock_time());
-        target.setLock_status(source.getLock_status());
-        target.setValid_time(source.getValid_time());
+        target.setExpirationTime(source.getExpirationTime());
+        target.setLockTime(source.getLockTime());
+        target.setLockStatus(source.getLockStatus());
+        target.setValidTime(source.getValidTime());
         target.setPassword(null);
         return target;
     }

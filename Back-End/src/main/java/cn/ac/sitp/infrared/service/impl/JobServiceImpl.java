@@ -6,20 +6,23 @@ import cn.ac.sitp.infrared.datasource.dao.Job;
 import cn.ac.sitp.infrared.datasource.mapper.JobMapper;
 import cn.ac.sitp.infrared.service.JobService;
 import cn.ac.sitp.infrared.util.Util;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class JobServiceImpl implements JobService {
-    private static final Log LOG = LogFactory.getLog(JobServiceImpl.class);
 
-    @Autowired
-    private JobMapper jobMapper;
+    private static final Logger log = LoggerFactory.getLogger(JobServiceImpl.class);
+
+    private final JobMapper jobMapper;
 
     @Override
     public Map<String, Object> getJobList(int currPage, int pageSize, AxrrAccount user) {
@@ -31,8 +34,13 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public void addJob(Long dataSetId, Long algorithmId, AxrrAccount user) {
-        jobMapper.insertJob(dataSetId, algorithmId, user);
+    public Long addJob(Long dataSetId, Long algorithmId, AxrrAccount user) {
+        return jobMapper.insertJob(dataSetId, algorithmId, user);
+    }
+
+    @Override
+    public Long addJobWithParams(Long dataSetId, Long algorithmId, AxrrAccount user, String parameters) {
+        return jobMapper.insertJobWithParams(dataSetId, algorithmId, user, parameters);
     }
 
     @Override
@@ -42,5 +50,38 @@ public class JobServiceImpl implements JobService {
         contents.put("algorithmList", algorithmList);
         Util.buildPageModel(pageSize, jobMapper.selectAlgorithmCount(), contents);
         return contents;
+    }
+
+    @Override
+    public List<Algorithm> getAlgorithmsByCategory(String category) {
+        return jobMapper.selectAlgorithmsByCategory(category);
+    }
+
+    @Override
+    public List<Algorithm> getAllActiveAlgorithms() {
+        return jobMapper.selectAllActiveAlgorithms();
+    }
+
+    @Override
+    @Async
+    public void simulateJobExecution(Long jobId) {
+        try {
+            // Mark as running
+            jobMapper.updateJobStatus(jobId, "RUN", null, null);
+            log.info("Job {} started execution (simulated)", jobId);
+
+            // Simulate processing time
+            Thread.sleep(5000);
+
+            // Mark as finished
+            jobMapper.updateJobStatus(jobId, "FIN", "/output/job_" + jobId + "_result.nc", null);
+            log.info("Job {} completed (simulated)", jobId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            jobMapper.updateJobStatus(jobId, "FAI", null, "Job execution interrupted");
+        } catch (Exception e) {
+            log.error("Job {} failed", jobId, e);
+            jobMapper.updateJobStatus(jobId, "FAI", null, e.getMessage());
+        }
     }
 }

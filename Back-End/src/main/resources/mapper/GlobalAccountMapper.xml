@@ -5,56 +5,27 @@
 <mapper
         namespace="cn.ac.sitp.infrared.datasource.mapper.GlobalAccountMapper">
 
-    <resultMap type="cn.ac.sitp.infrared.datasource.dao.AxrrAccount"
-               id="AxrrAccount">
-        <result property="userno" column="userno"/>
+    <!-- Single-query resultMap: eliminates N+1 nested selects for clinics and permissions -->
+    <resultMap type="cn.ac.sitp.infrared.datasource.dao.AxrrAccount" id="AxrrAccount">
+        <id property="userno" column="userno"/>
+        <result property="failureCount" column="failure_count"/>
+        <result property="expirationTime" column="expiration_time"/>
+        <result property="lockTime" column="lock_time"/>
+        <result property="lockStatus" column="lock_status"/>
+        <result property="validTime" column="valid_time"/>
         <collection property="clinicPermissions"
-                    ofType="cn.ac.sitp.infrared.datasource.dao.AxrrClinicPermission"
-                    select="selectClinic" column="{userno = userno}">
+                    ofType="cn.ac.sitp.infrared.datasource.dao.AxrrClinicPermission">
+            <id property="organization_no" column="org_no"/>
+            <result property="organization_id" column="org_id"/>
+            <result property="organization_name" column="org_name"/>
+            <result property="description" column="org_desc"/>
+            <collection property="permissionlist"
+                        ofType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission">
+                <id property="permission_no" column="perm_no"/>
+                <result property="permission_id" column="perm_id"/>
+            </collection>
         </collection>
     </resultMap>
-
-    <select id="selectClinic" parameterType="java.util.HashMap"
-            resultMap="ClinicPermission">
-        select distinct o.organization_no,
-                        o.organization_id,
-                        o.organization_name,
-                        o.description,
-                        ugr.fk_user_no AS userno
-        from t_control_organization o
-                 JOIN
-             t_control_group_organization go ON o.organization_no =
-                                                go.fk_organizationno and o.valid = 'Y'
-                 JOIN t_control_group g ON g.id = go.fk_groupno
-                 JOIN t_control_user_group_role ugr on g.id = ugr.fk_group_no
-        where ugr.fk_user_no = #{userno}
-    </select>
-
-    <resultMap
-            type="cn.ac.sitp.infrared.datasource.dao.AxrrClinicPermission"
-            id="ClinicPermission">
-        <result property="organization_no" column="organization_no"/>
-        <collection property="permissionlist"
-                    ofType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission"
-                    select="selectPermission" column="{userno = userno, organization_no = organization_no}">
-        </collection>
-    </resultMap>
-
-    <select id="selectPermission" parameterType="java.util.HashMap"
-            resultType="cn.ac.sitp.infrared.datasource.dao.AxrrPermission">
-        select distinct p.permission_no, p.permission_id
-        from t_control_permission p
-                 JOIN t_control_role_permission rp ON
-            rp.fk_permission_no = p.permission_no
-                 JOIN t_control_role r ON
-            rp.fk_role_no = r.role_no
-                 JOIN t_control_user_group_role ugr ON
-            ugr.fk_role_no = rp.fk_role_no
-                 JOIN t_control_group_organization go ON
-            ugr.fk_group_no = go.fk_groupno
-        where ugr.fk_user_no = #{userno}
-          and go.fk_organizationno = #{organization_no}
-    </select>
 
     <select id="getRoleList" parameterType="java.util.Map"
             resultType="cn.ac.sitp.infrared.datasource.dao.AxrrRole">
@@ -74,12 +45,24 @@
         from t_control_role_permission
     </select>
 
-    <select id="getUserByName" parameterType="java.util.Map"
-            resultMap="AxrrAccount">
-        select *
-        from t_control_user
-        where username = #{username}
-          and type != 'Administrator'
+    <!-- Single query replaces N+1: 1 user + N clinics + N*M permissions in one round-trip -->
+    <select id="getUserByName" parameterType="java.util.Map" resultMap="AxrrAccount">
+        SELECT u.*,
+               o.organization_no AS org_no,
+               o.organization_id AS org_id,
+               o.organization_name AS org_name,
+               o.description AS org_desc,
+               p.permission_no AS perm_no,
+               p.permission_id AS perm_id
+        FROM t_control_user u
+        LEFT JOIN t_control_user_group_role ugr ON u.userno = ugr.fk_user_no
+        LEFT JOIN t_control_group g ON ugr.fk_group_no = g.id
+        LEFT JOIN t_control_group_organization go ON g.id = go.fk_groupno
+        LEFT JOIN t_control_organization o ON go.fk_organizationno = o.organization_no AND o.valid = 'Y'
+        LEFT JOIN t_control_role_permission rp ON ugr.fk_role_no = rp.fk_role_no
+        LEFT JOIN t_control_permission p ON rp.fk_permission_no = p.permission_no
+        WHERE u.username = #{username}
+          AND u.type != 'Administrator'
     </select>
 
     <update id="lockAccount">

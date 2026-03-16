@@ -11,12 +11,11 @@ import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.request.LoginRequest;
 import cn.ac.sitp.infrared.web.request.PasswordUpdateRequest;
 import cn.ac.sitp.infrared.web.request.RegisterRequest;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -28,18 +27,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/rest/account")
+@RequiredArgsConstructor
 public class AccountController {
 
     private static final Logger log = LoggerFactory.getLogger(AccountController.class);
 
-    @Resource
-    private HttpServletRequest request;
-
-    @Autowired
-    private AccountService accountService;
-
-    @Autowired
-    private AuditLogService logService;
+    private final HttpServletRequest request;
+    private final AccountService accountService;
+    private final AuditLogService logService;
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
     public Map<String, Object> account() {
@@ -138,7 +133,7 @@ public class AccountController {
     public Map<String, Object> register(@RequestBody(required = false) RegisterRequest requestBody) {
         String ip = Util.getUserIpAddr(request);
         RegisterRequest registerRequest = requestBody == null ? new RegisterRequest() : requestBody;
-        
+
         String username = decodeCredential(registerRequest.getUsername());
         String password = decodeCredential(registerRequest.getPassword());
         String displayname = decodeCredential(registerRequest.getDisplayname());
@@ -152,7 +147,7 @@ public class AccountController {
             AxrrAccount user = accountService.registerAccount(username, password, displayname, email);
             logService.saveAccountAuditLog(ip, LogActionEnum.REGISTER, Util.STATUS_SUCCESS, new Date(),
                     user.getUserid(), user.getDisplayname(), null);
-            
+
             // Auto-login after registration
             SessionAccountHelper.storeAccount(request, user);
             Map<String, Object> contents = new HashMap<>();

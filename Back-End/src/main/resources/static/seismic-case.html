@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>红外地球 - 缅甸地震案例分析</title>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/home-portal.css">
+  <script src="js/csrf-axios.js"></script>
+  <script src="js/session-state.js"></script>
+  <style>
+    /* ── Page-level overrides ── */
+    body {
+      margin: 0; min-height: 100vh;
+      background:
+        radial-gradient(circle at top center, rgba(36,93,255,0.16), transparent 28%),
+        linear-gradient(180deg, #04112e 0%, #031028 48%, #020915 100%);
+      color: #eef3ff;
+      font-family: "Noto Sans SC","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+      --portal-bg: #031028;
+      --portal-surface: rgba(10,22,54,0.8);
+      --portal-border: rgba(130,157,255,0.16);
+      --portal-shadow: 0 28px 80px rgba(0,0,0,0.28);
+      --portal-text: #eef3ff;
+      --portal-muted: rgba(223,232,255,0.76);
+      --portal-accent: linear-gradient(135deg, #ff2ea6, #8e49ff);
+      --portal-blue: linear-gradient(135deg, #1d8dff, #315cff);
+      --paper-bg: linear-gradient(180deg, rgba(247,250,255,0.98), rgba(232,239,255,0.92));
+      --paper-text: #102042;
+      --paper-muted: #4b5877;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Layout ── */
+    .page-body {
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+    @media (max-width: 900px) {
+      .case-sidebar { display: none; }
+    }
+
+    /* ── Sidebar ── */
+    .case-sidebar {
+      position: fixed; top: 80px; left: 0; bottom: 0;
+      width: 260px;
+      padding: 28px 20px;
+      background: var(--portal-surface);
+      border-right: 1px solid var(--portal-border);
+      backdrop-filter: blur(18px);
+      overflow-y: auto;
+      z-index: 50;
+    }
+    .case-sidebar h3 {
+      font-size: 1.1rem; font-weight: 700; margin: 0 0 22px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--portal-border);
+    }
+    .sidebar-nav { list-style: none; padding: 0; margin: 0; }
+    .sidebar-nav li { margin-bottom: 4px; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 12px;
+      font-size: 0.92rem; font-weight: 500;
+      color: var(--portal-muted);
+      transition: all 0.2s;
+    }
+    .sidebar-nav a:hover,
+    .sidebar-nav a.is-active {
+      color: #fff;
+      background: rgba(255,255,255,0.08);
+    }
+    .sidebar-nav a.is-active {
+      background: var(--portal-blue);
+      box-shadow: 0 8px 24px rgba(29,141,255,0.18);
+    }
+    .sidebar-nav .nav-icon {
+      width: 22px; text-align: center; font-size: 0.85rem; opacity: 0.7;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 24px; padding: 10px 18px;
+      border-radius: 999px; border: 1px solid rgba(140,165,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #eef3ff; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .back-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); }
+
+    /* ── Main Content ── */
+    .case-content {
+      margin-left: 280px;
+      padding: 34px 42px 60px;
+    }
+    @media (max-width: 900px) {
+      .case-content { margin-left: 0; padding: 20px; }
+    }
+
+    /* ── Hero Banner ── */
+    .case-hero {
+      position: relative; overflow: hidden;
+      background: var(--portal-surface);
+      border: 1px solid var(--portal-border);
+      border-radius: 28px;
+      padding: 44px 38px;
+      margin-bottom: 28px;
+      box-shadow: var(--portal-shadow);
+      backdrop-filter: blur(18px);
+    }
+    .case-hero::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(circle at top right, rgba(255,46,166,0.12), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.03), transparent 48%);
+    }
+    .case-hero .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      width: fit-content; padding: 8px 14px;
+      border-radius: 999px; background: rgba(255,255,255,0.06);
+      color: rgba(236,243,255,0.82); font-size: 0.78rem;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .case-hero h1 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800; line-height: 1.2;
+      margin: 0 0 16px; letter-spacing: -0.01em;
+    }
+    .case-hero .hero-meta {
+      display: flex; flex-wrap: wrap; gap: 18px;
+      font-size: 0.9rem; color: var(--portal-muted);
+    }
+    .case-hero .hero-meta span {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    /* ── Section Card ── */
+    .section-card {
+      position: relative; overflow: hidden;
+      background: var(--portal-surface);
+      border: 1px solid var(--portal-border);
+      border-radius: 24px;
+      padding: 34px 32px;
+      margin-bottom: 22px;
+      box-shadow: 0 18px 44px rgba(0,0,0,0.18);
+      backdrop-filter: blur(18px);
+    }
+    .section-card::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 40%);
+    }
+    .section-card h2 {
+      font-size: 1.4rem; font-weight: 700; margin: 0 0 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--portal-border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-card h2 .sec-icon {
+      display: grid; place-items: center;
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--portal-blue);
+      font-size: 0.95rem; flex-shrink: 0;
+    }
+    .section-card h3 {
+      font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px;
+      color: rgba(200,215,255,0.95);
+    }
+    .section-card p {
+      color: var(--portal-muted);
+      line-height: 1.85; margin: 0 0 14px;
+      text-indent: 2em;
+    }
+    .section-card ul, .section-card ol {
+      color: var(--portal-muted);
+      line-height: 1.85; padding-left: 2em; margin: 0 0 14px;
+    }
+
+    /* ── Figure ── */
+    .figure {
+      margin: 22px 0;
+      padding: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(140,165,255,0.12);
+      border-radius: 18px;
+    }
+    .figure img {
+      display: block; max-width: 100%; height: auto;
+      border-radius: 12px; margin: 0 auto;
+    }
+    .figure-row {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    }
+    .figure-row img {
+      flex: 1 1 180px; max-width: 24%; min-width: 140px;
+      height: 200px; object-fit: cover; border-radius: 12px;
+    }
+    .figure-caption {
+      text-align: center; font-size: 0.82rem;
+      color: var(--portal-muted); margin-top: 12px;
+      font-style: italic; line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    .case-footer {
+      margin-left: 260px;
+      padding: 22px 38px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--portal-muted);
+      border-top: 1px solid var(--portal-border);
+    }
+    @media (max-width: 900px) {
+      .case-footer { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Platform Header (same as index.html) ── -->
+  <header class="platform-header">
+    <div class="platform-brand">
+      <div class="brand-flag">IR</div>
+      <div class="brand-copy">
+        <strong>红外地球</strong>
+        <small>Infrared Earth</small>
+      </div>
+    </div>
+    <nav class="platform-nav">
+      <a href="index.html">首页</a>
+      <a href="data-hub.html">数据检索</a>
+      <a href="processing.html">模型分析</a>
+      <a href="examples.html" class="is-active">案例分析</a>
+    </nav>
+    <div class="platform-actions nav-actions">
+      <button class="ghost-btn btn-login">用户登录</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <!-- ── Sidebar ── -->
+    <aside class="case-sidebar">
+      <h3><i class="fa fa-book"></i> 缅甸地震分析</h3>
+      <ul class="sidebar-nav">
+        <li><a href="#overview" class="is-active" data-sec="overview">
+          <span class="nav-icon"><i class="fa fa-info-circle"></i></span>概述与背景</a></li>
+        <li><a href="#geological-background" data-sec="geological-background">
+          <span class="nav-icon"><i class="fa fa-globe"></i></span>地质背景分析</a></li>
+        <li><a href="#thermal-coupling" data-sec="thermal-coupling">
+          <span class="nav-icon"><i class="fa fa-fire"></i></span>热力耦合分析</a></li>
+        <li><a href="#cascade-disaster" data-sec="cascade-disaster">
+          <span class="nav-icon"><i class="fa fa-warning"></i></span>级联灾害分析</a></li>
+      </ul>
+      <button class="back-btn" onclick="history.back()">
+        <i class="fa fa-arrow-left"></i> 返回案例列表
+      </button>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="case-content">
+
+      <!-- Hero -->
+      <div class="case-hero" id="overview">
+        <div class="eyebrow"><i class="fa fa-satellite-dish"></i> 地震案例研究</div>
+        <h1>2025年3月28日缅甸强震及思考</h1>
+        <div class="hero-meta">
+          <span><i class="fa fa-map-marker"></i> 缅甸实皆市 (21.85°N, 95.95°E)</span>
+          <span><i class="fa fa-bolt"></i> M7.9 震源深度 30km</span>
+          <span><i class="fa fa-calendar"></i> 2025-03-28 14:20 (UTC+8)</span>
+        </div>
+      </div>
+
+      <!-- Section 1: Overview -->
+      <div class="section-card">
+        <h2><span class="sec-icon"><i class="fa fa-file-text-o"></i></span> 地震概述</h2>
+        <p>2025年3月28日14时20分（东八区时间），缅甸实皆市附近（北纬21.85度，东经95.95度）发生里氏7.9级地震，震源深度30公里。震中距离中国边境线最近处约294公里。</p>
+
+        <h3>一、地震本质与预警难点</h3>
+        <p>地震的本质是岩层断裂，这一过程的精确建模极具挑战性。难点在于断裂发生瞬间，地质介质从连续状态转变为非连续状态，同时应力分布、地质结构形态以及机械能与热能等多种能量形式相互作用、高度耦合。利用地震波中P波和S波的初至时间差进行预警，能在地震破坏性的S波和面波到达前数秒至数十秒发出警报，为人员疏散和关键操作争取宝贵时间。然而，实现更长期的地震预测预报（延长预警时间）以及对震后损失的快速准确评估，仍是全球地震科学家面临的核心难题。</p>
+
+        <h3>二、预测预报：聚焦应力与孕震过程</h3>
+        <p>预测局部地区的强震活动性，关键在于理解其驱动断层的应力状态变化。这需要持续关注断层的初始应力状态、在长期平静期内的应力积累趋势、震前中期的应力扰动迹象，以及同震时的应力突变。这些变化深受构造驱动力、断层几何形态以及地质介质非均匀性等因素影响。因此，揭示地震孕育、发生全过程（即全周期）中应力场的分布与演化规律，明晰复杂因素影响下的强震孕震机理，是进行地震危险性分析的根本基础和核心任务。</p>
+
+        <h3>三、震后损失评估：走向精准与系统化</h3>
+        <p>震后损失评估是一个融合科学模型、技术应用与制度设计的系统工程：</p>
+        <ol>
+          <li>理念上：追求形成"精准刻画灾情-科学支撑重建决策"的闭环。</li>
+          <li>方法上：从宏观粗估向单栋建筑精细模拟转变，并探索量化间接损失。</li>
+          <li>实施上：依托全国自然灾害风险普查数据库和分级报灾体系，结合卫星遥感和人工智能技术，大幅提升评估效率。</li>
+        </ol>
+        <p>未来仍需攻克的关键问题包括间接经济损失的动态监测，以及非经济价值（如文化遗产、生态损失）的量化，推动评估重心从单纯的"物理重建"向全面的"经济社会系统恢复"延伸。</p>
+      </div>
+
+      <!-- Section 2: Cascade Disaster Intro + Images -->
+      <div class="section-card">
+        <h2><span class="sec-icon"><i class="fa fa-building"></i></span> 级联灾害：泰国审计署大楼倒塌</h2>
+        <p>此次缅甸地震引发了一个令人深思的远场级联灾害事件：地震发生时，位于千里之外泰国曼谷甘烹碧路（邻近洽图洽周末市集）的33层审计署大楼瞬间倒塌。截至2025年5月1日，该事故已造成83人死亡、33人受伤，另有11人失踪。</p>
+        <div class="figure">
+          <div class="figure-row">
+            <img src="res/1-1.png" alt="震中与审计署大楼位置关系">
+            <img src="res/1-2.png" alt="审计署大楼倒塌前">
+            <img src="res/1-3.png" alt="审计署大楼倒塌过程">
+            <img src="res/1-4.png" alt="审计署大楼倒塌后">
+          </div>
+          <div class="figure-caption">图1-4：震中与审计署大楼位置关系，审计署大楼倒塌前、后及倒塌过程（来源：网络）</div>
+        </div>
+      </div>
+
+      <!-- Section 3: Geological Background -->
+      <div class="section-card" id="geological-background">
+        <h2><span class="sec-icon"><i class="fa fa-globe"></i></span> 地质背景分析</h2>
+        <div class="figure">
+          <img src="res/地震背景-1.png" alt="青藏高原板块挤压及断裂带示意图" style="max-width:70%;">
+          <div class="figure-caption">图5：青藏高原板块挤压及断裂带示意图（维基百科）</div>
+        </div>
+        <p>印度板块大约从55个百万年前开始碰撞欧亚大陆，造成了喜马拉雅山脉的持续隆升。</p>
+        <div class="figure">
+          <img src="res/地震背景-2.png" alt="印度板块斜向汇聚图" style="max-width:80%;">
+          <div class="figure-caption">图6：印度板块斜向汇聚图，黑色线表示逆冲断裂、红色线表示实皆断裂（中国地震局地质研究所，修改自Kundu et al., 2012）</div>
+        </div>
+        <p>在东侧形成印度-缅甸褶皱冲断带，该地区斜向挤压的变形分别通过逆冲和走滑的方式予以分解，此次缅甸地震就发生在以右旋走滑为主的实皆断裂上。</p>
+      </div>
+
+      <!-- Section 4: Thermal Coupling -->
+      <div class="section-card" id="thermal-coupling">
+        <h2><span class="sec-icon"><i class="fa fa-fire"></i></span> 热力-位移场耦合分析</h2>
+        <p>应力累积到什么情况下，就会发生地震？这一点是需要回答的。可惜受限于观测时间尺度（年计）和应力累积时间尺度（万年计），初始应力是不清楚的。天基观测（比如红外观测热场、SAR观测位移）是持续的，用状态（热场-位移场）的差异调整模型的初始应力场，这是一个典型的强非线性反问题。而物理过程（应力累积）的精细刻画是反演的基本保障，反演理论奠基人之一Albert Tarantola在其著作中指出："反演问题的解必须满足观测数据与理论预测之间的一致性"。因此，需要更多的观测信息辅助更新应力-应变场。</p>
+        <p>对于3·28缅甸地震，我们分析其地表热场和位移场，沿断裂带解耦出应力累积所造成的热场变换，如下图所示。</p>
+        <div class="figure">
+          <img src="res/热力-1.png" alt="热-位移场展示" style="max-width:80%;">
+          <div class="figure-caption">图7：热-位移场展示，左图为同震南北向位移（地震研究中心），右图为地震前后地表热场变化</div>
+        </div>
+        <div class="figure">
+          <img src="res/热力-2.png" alt="实皆断裂带及周边热场异常展示" style="max-width:80%;">
+          <div class="figure-caption">图8：实皆断裂带及周边热场异常展示，左图为地震中心位置，右图为沿断裂带热力变化（已经与空气温度和湿度解耦）</div>
+        </div>
+      </div>
+
+      <!-- Section 5: Cascade Disaster Analysis -->
+      <div class="section-card" id="cascade-disaster">
+        <h2><span class="sec-icon"><i class="fa fa-warning"></i></span> 级联灾害传播分析</h2>
+        <p>审计署大楼位于泰国中部平原，属于Chao Phraya盆地的沉积中心，该盆地是一个典型的后裂谷热沉降盆地，形成于晚中新世至早上新世。其基底由古近纪裂谷盆地（如Suphan Buri、Ayutthaya盆地）和前新生代岩石组成，上覆平坦的年轻沉积层。</p>
+        <p>根据泰国中、西部地磁图，可以看出曼谷存在东西走向的异常带，结合亚欧板块-印度板块挤压所形成的褶皱、地震反射成像结果，推断东西走向断裂。</p>
+        <div class="figure">
+          <div class="figure-row" style="max-width:700px; margin:0 auto;">
+            <img src="res/级联.png" alt="审计署大楼位置所在盆地" style="max-width:48%; flex:1 1 260px; height:auto;">
+            <img src="res/级联-2.png" alt="东南亚现代应力状态图" style="max-width:48%; flex:1 1 260px; height:auto;">
+          </div>
+          <div class="figure-caption">图9左：审计署大楼位置（红圈）所在盆地位置（Morley C K, 2011）<br>图9右：东南亚大陆北部的现代应力状态图（Morley C K, 2011）</div>
+        </div>
+        <p>上图展示了根据主要断层位移推断出的 Shmax 方向与基于上地壳地震震源机制的现代应力状态的匹配情况。其中，地震数据（1975 年至今）来自哈佛数据库；Tingay等（2009 年）的钻孔破裂数据；三塔山断层区域的地震数据来自Bott等（1997 年），并认为这些地震是由与新大坝相关的水库蓄水引起的水加载所触发的。</p>
+        <p>选取四个位置对比分析地震频次（0-18）与震级（5.1-6和6.1-7），区域（a）：24-28°N，97-101°E；区域（b）：20-24°N，97-101°E；区域（c）16-20°N，97-101°E；区域（d）12-16°N，97-101°E，展示了在研究区域内向南移动的地震的震级和发生频率的逐渐降低情况。</p>
+        <p>Simon等（2007 年）的关于中国相对于苏门答腊岛的GPS测量速度图表示，萨甘断层以西的速度箭头是从更靠西的实际站点延伸过来的，以说明萨甘断层沿线的现代大规模位移情况。</p>
+        <p>结合以上分析，可以认为：实皆断裂带的活动通过走滑网络（Mae Ping、Three Pagodas断裂）向东传递，最终传递到审计署大楼位置。但能量已经较弱，建筑设计、材料品质、施工与管理等问题是倒塌的主要因素。</p>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="case-footer">
+    红外地球 Infrared Earth &copy; 2025 中国科学院上海技术物理研究所
+  </footer>
+
+  <!-- Sidebar scroll-spy -->
+  <script>
+    (function () {
+      const links = document.querySelectorAll('.sidebar-nav a');
+      const sections = [];
+      links.forEach(a => {
+        const id = a.getAttribute('data-sec');
+        const el = document.getElementById(id);
+        if (el) sections.push({ el, a });
+      });
+
+      function update() {
+        let current = sections[0];
+        const scrollY = window.scrollY + 140;
+        for (const s of sections) {
+          if (s.el.offsetTop <= scrollY) current = s;
+        }
+        links.forEach(a => a.classList.remove('is-active'));
+        if (current) current.a.classList.add('is-active');
+      }
+
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+
+      // smooth scroll
+      links.forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          const id = a.getAttribute('data-sec');
+          const target = document.getElementById(id);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

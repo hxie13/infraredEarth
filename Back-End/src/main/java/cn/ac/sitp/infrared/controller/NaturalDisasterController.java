@@ -8,11 +8,9 @@ import cn.ac.sitp.infrared.service.NaturalDisasterService;
 import cn.ac.sitp.infrared.util.RequestValueUtils;
 import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.GlobalExceptionHandler;
-import com.alibaba.fastjson2.JSONObject;
 import cn.ac.sitp.infrared.web.request.NaturalDisasterListRequest;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,19 +25,15 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/rest/naturaldisaster")
+@RequiredArgsConstructor
 public class NaturalDisasterController {
 
-    @Resource
-    private HttpServletRequest request;
-
-    @Autowired
-    private AuditLogService logService;
-
-    @Autowired
-    private NaturalDisasterService naturalDisasterService;
+    private final HttpServletRequest request;
+    private final AuditLogService logService;
+    private final NaturalDisasterService naturalDisasterService;
 
     @RequestMapping(value = "/getType", method = RequestMethod.POST)
-    public Map<String, Object> getDisasterTypeList(@RequestBody JSONObject obj) {
+    public Map<String, Object> getDisasterTypeList(@RequestBody Object obj) {
         String ip = Util.getUserIpAddr(request);
         AxrrAccount user = SessionAccountHelper.currentAccount(request);
         String description = LogActionEnum.GET_NATURAL_DISASTER_TYPE_LIST.getDescription() + " " + obj;

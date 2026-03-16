@@ -7,9 +7,8 @@ import cn.ac.sitp.infrared.service.AuditLogService;
 import cn.ac.sitp.infrared.util.RequestValueUtils;
 import cn.ac.sitp.infrared.util.Util;
 import cn.ac.sitp.infrared.web.GlobalExceptionHandler;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,16 +19,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/rest/log")
+@RequiredArgsConstructor
 public class LogController {
 
-    @Resource
-    private HttpServletRequest request;
-
-    @Autowired
-    private AuditLogService logService;
+    private final HttpServletRequest request;
+    private final AuditLogService logService;
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
-    public Map<String, Object> getDeviceInfoDetail(
+    public Map<String, Object> getLogList(
             @RequestParam(value = "curr_page", defaultValue = "1") int currPage,
             @RequestParam(value = "page_size", defaultValue = "10") int pageSize,
             @RequestParam(value = "begin_date", required = false) String beginDateStr,

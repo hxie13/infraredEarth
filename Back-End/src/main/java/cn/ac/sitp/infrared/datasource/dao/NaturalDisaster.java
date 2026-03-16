@@ -1,12 +1,12 @@
 package cn.ac.sitp.infrared.datasource.dao;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
-import cn.ac.sitp.infrared.util.Util;
 
 @Setter
 @Getter
@@ -59,26 +59,14 @@ public class NaturalDisaster implements Serializable {
     private Long totalDamageAdjusted;
     private BigDecimal cpi;
     private String adminUnits;
+
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
     private Date entryDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
     private Date lastUpdate;
+
     private String imgPath;
     private String description;
-    private String entryDateStr;
-    private String lastUpdateStr;
 
-    public String getEntryDateStr() {
-        return Util.dateToStringLong(this.entryDate, Util.FORMAT_SHORT);
-    }
-
-    public void setEntryDateStr(String entryDateStr) {
-        this.entryDateStr = Util.dateToStringLong(this.entryDate, Util.FORMAT_SHORT);
-    }
-
-    public String getLastUpdateStr() {
-        return Util.dateToStringLong(this.lastUpdate, Util.FORMAT_SHORT);
-    }
-
-    public void setLastUpdateStr(String lastUpdateStr) {
-        this.lastUpdateStr = Util.dateToStringLong(this.lastUpdate, Util.FORMAT_SHORT);
-    }
 }

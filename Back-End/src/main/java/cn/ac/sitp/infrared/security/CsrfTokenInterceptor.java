@@ -20,7 +20,13 @@ public class CsrfTokenInterceptor implements HandlerInterceptor {
     private static final String CSRF_HEADER_NAME = "X-CSRF-Token";
     private static final String CSRF_COOKIE_NAME = "XSRF-TOKEN";
     private static final Set<String> SAFE_METHODS = Set.of("GET", "HEAD", "OPTIONS");
-    private static final Set<String> CSRF_EXEMPT_SUFFIXES = Set.of("/login", "/register");
+    private static final Set<String> CSRF_EXEMPT_SUFFIXES = Set.of(
+            "/login", "/register",
+            // Read-only query endpoints that use POST for request bodies
+            "/list", "/getType",
+            // AI chat endpoint
+            "/chat"
+    );
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -35,6 +41,7 @@ public class CsrfTokenInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         for (String suffix : CSRF_EXEMPT_SUFFIXES) {
             if (uri.endsWith(suffix)) {
+                ensureCsrfToken(request, response);
                 return true;
             }
         }
@@ -59,10 +66,11 @@ public class CsrfTokenInterceptor implements HandlerInterceptor {
         if (token == null) {
             token = UUID.randomUUID().toString();
             session.setAttribute(CSRF_SESSION_KEY, token);
+            // Only set cookie when token is newly generated
+            Cookie cookie = new Cookie(CSRF_COOKIE_NAME, token);
+            cookie.setPath("/");
+            cookie.setHttpOnly(false);
+            response.addCookie(cookie);
         }
-        Cookie cookie = new Cookie(CSRF_COOKIE_NAME, token);
-        cookie.setPath("/");
-        cookie.setHttpOnly(false);
-        response.addCookie(cookie);
     }
 }

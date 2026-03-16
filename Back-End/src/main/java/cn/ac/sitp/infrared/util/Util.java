@@ -1,23 +1,17 @@
 package cn.ac.sitp.infrared.util;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Util {
 
@@ -27,13 +21,16 @@ public class Util {
     public static final String STATUS_FAILURE = "FAILURE";
     public static final String FORMAT_LONG = "yyyy-MM-dd HH:mm:ss";
     public static final String FORMAT_SHORT = "yyyy-MM-dd";
-    public static final String FORMAT_ARRANGE = "yyyy-MM-dd HH:mm";
+    public static final String GENERIC_ERROR_MESSAGE = "Internal server error";
+
     private static final String RESPONSE_ERROR_CODE = "errorCode";
     private static final String RESPONSE_STATUS = "status";
     private static final String RESPONSE_RESULT_SUCCESS = "Success";
     private static final String RESPONSE_RESULT_FAILURE = "Failure";
     private static final String RESPONSE_RESULT_LOGGED_OUT = "Logged_out";
-    public static final String GENERIC_ERROR_MESSAGE = "Internal server error";
+
+    private Util() {
+    }
 
     public static Map<String, Object> noLogin() {
         Map<String, Object> contents = new HashMap<>();
@@ -41,11 +38,21 @@ public class Util {
         return contents;
     }
 
-    public static String dateToStringLong(Date date, String pattern) {
-        if (date != null) {
-            return new SimpleDateFormat(pattern).format(date);
+    public static Map<String, Object> suc(Map<String, Object> contents) {
+        if (contents == null) {
+            contents = new HashMap<>();
         }
-        return null;
+        contents.put(RESPONSE_STATUS, RESPONSE_RESULT_SUCCESS);
+        return contents;
+    }
+
+    public static Map<String, Object> err(Map<String, Object> contents, String errorCode) {
+        if (contents == null) {
+            contents = new HashMap<>();
+        }
+        contents.put(RESPONSE_STATUS, RESPONSE_RESULT_FAILURE);
+        contents.put(RESPONSE_ERROR_CODE, errorCode);
+        return contents;
     }
 
     public static Date strToDate(String str, String pattern) {
@@ -56,143 +63,11 @@ public class Util {
         }
     }
 
-    public static String generateArray(String[] list) {
-        if (list == null || list.length < 1) {
-            return "array['0']";
-        }
-        StringBuilder result = new StringBuilder("array[");
-        for (String str : list) {
-            result.append("'").append(str).append("',");
-        }
-        result = new StringBuilder(result.substring(0, result.length() - 1));
-        result.append("]");
-        return result.toString();
-    }
-
-    public static Boolean isInteger(String str) {
-        try {
-            Integer.parseInt(str);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public static long toLong(String str) {
-        try {
-            return Long.parseLong(str);
-        } catch (Exception e) {
-            return 0L;
-        }
-    }
-
-    public static int toInt(String str) {
-        try {
-            return Integer.parseInt(str);
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    public static Boolean isDate(String str) {
-        if (str == null) {
-            return false;
-        } else if (str.length() == 10) {
-            try {
-                new SimpleDateFormat(FORMAT_SHORT).parse(str);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        } else if (str.length() == 19) {
-            try {
-                new SimpleDateFormat(FORMAT_LONG).parse(str);
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 将Unicode编码转换为中文字符串
-     * @param str Unicode编码
-     */
-    public static String unicodeToCN(String str) {
-        Pattern pattern = Pattern.compile("(\\\\u(\\p{XDigit}{4}))");
-        Matcher matcher = pattern.matcher(str);
-        char ch;
-        while (matcher.find()) {
-            ch = (char) Integer.parseInt(matcher.group(2), 16);
-            str = str.replace(matcher.group(1), ch + "");
-        }
-        return str;
-    }
-
-    public static Map<String, Object> suc(Map<String, Object> contents) {
-        if (contents == null) {
-            contents = new HashMap<String, Object>();
-        }
-        contents.put(RESPONSE_STATUS, RESPONSE_RESULT_SUCCESS);
-        return contents;
-    }
-
-    public static Map<String, Object> err(Map<String, Object> contents, String errorCode) {
-        if (contents == null) {
-            contents = new HashMap<String, Object>();
-        }
-        contents.put(RESPONSE_STATUS, RESPONSE_RESULT_FAILURE);
-        contents.put(RESPONSE_ERROR_CODE, errorCode);
-        return contents;
-    }
-
     public static String getStackTrace(Throwable throwable) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         throwable.printStackTrace(pw);
         return sw.toString();
-    }
-
-    public static String base64encode(String str) {
-        if (str == null) {
-            return "";
-        } else {
-            try {
-                return new String(Base64.encodeBase64(str.getBytes("utf-8")));
-            } catch (UnsupportedEncodingException e) {
-                log.error("Failed to encode base64", e);
-                return new String(Base64.encodeBase64(str.getBytes()));
-            }
-        }
-    }
-
-    public static String base64decode(String str) {
-        if (str == null) {
-            return "";
-        } else {
-            try {
-                return new String(Base64.decodeBase64(str.getBytes()), "utf-8");
-            } catch (UnsupportedEncodingException e) {
-                log.error("Failed to decode base64", e);
-                return new String(Base64.decodeBase64(str.getBytes()));
-            }
-        }
-    }
-
-    public static String UIDGenerator(String hospitalid, Date report_date, long order_no) {
-        return "1.2.840." + hospitalid + "." + dateToStringLong(report_date, "yyyy.MM.dd.HH.mm.ss") + "."
-                + System.currentTimeMillis() + "." + order_no;
-    }
-
-    public static String getLocalIP() {
-        try {
-            InetAddress ia = InetAddress.getLocalHost();
-            return ia.getHostAddress();
-        } catch (Exception e) {
-            log.error("Failed to get local IP", e);
-        }
-        return null;
     }
 
     public static String getUserIpAddr(HttpServletRequest request) {
@@ -208,68 +83,24 @@ public class Util {
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
-            if (ip.equals("127.0.0.1") || ip.equals("0:0:0:0:0:0:0:1")) {
-                InetAddress inetAddress = null;
+            if ("127.0.0.1".equals(ip) || "0:0:0:0:0:0:0:1".equals(ip)) {
                 try {
-                    inetAddress = InetAddress.getLocalHost();
+                    InetAddress inetAddress = InetAddress.getLocalHost();
+                    ip = inetAddress.getHostAddress();
                 } catch (UnknownHostException e) {
                     log.error("Failed to resolve local host", e);
                 }
-                ip = inetAddress.getHostAddress();
             }
         }
-        if (ip != null && ip.length() > 15) {
-            if (ip.indexOf(",") > 0) {
-                ip = ip.substring(0, ip.indexOf(","));
-            }
+        if (ip != null && ip.length() > 15 && ip.contains(",")) {
+            ip = ip.substring(0, ip.indexOf(","));
         }
         return ip;
-    }
-
-    public static File transferToFile(MultipartFile multipartFile) {
-        File file = null;
-        try {
-            String originalFilename = multipartFile.getOriginalFilename();
-            file = File.createTempFile(originalFilename.substring(0, originalFilename.lastIndexOf(".")),
-                    originalFilename.substring(originalFilename.lastIndexOf(".")));
-            multipartFile.transferTo(file);
-            file.deleteOnExit();
-        } catch (IOException e) {
-            log.error("Failed to transfer multipart file", e);
-        }
-        return file;
     }
 
     public static void buildPageModel(int pageSize, int totalAmount, Map<String, Object> contents) {
         contents.put("totalRecords", totalAmount);
         contents.put("pageCount", pageSize > 0 ? (totalAmount / pageSize + (totalAmount % pageSize > 0 ? 1 : 0)) : 1);
-    }
-
-    public static List<Long> StringToLongList(String strings) {
-        List<Long> longList = new ArrayList<>();
-        if (strings != null && !strings.isEmpty()) {
-            String[] stringArr = strings.split(",");
-            for (String s : stringArr) {
-                Long parseLong = Long.parseLong(s);
-                longList.add(parseLong);
-            }
-        }
-        return longList;
-    }
-
-    public static String[] generateNumberArray(int number) {
-        if (number == 0) number = 1;
-        String[] numberArray = new String[number];
-        for (int i = 0; i < number; i++) {
-            numberArray[i] = String.valueOf(i + 1);
-        }
-        return numberArray;
-    }
-
-    public static boolean genderEqual(String risGender, String dicomGender) {
-        return (Arrays.asList("男", "M").contains(risGender)) && (Arrays.asList("男", "M").contains(dicomGender))
-                || (Arrays.asList("女", "F").contains(risGender)) && (Arrays.asList("女", "F").contains(dicomGender))
-                || (Arrays.asList("未知", "O").contains(risGender)) && (Arrays.asList("未知", "O").contains(dicomGender));
     }
 
     public static String escapeLikePattern(String input) {

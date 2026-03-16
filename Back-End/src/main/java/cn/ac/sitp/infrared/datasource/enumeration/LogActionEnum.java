@@ -19,7 +19,8 @@ public enum LogActionEnum {
     ADD_JOB("Add job"),
     GET_NATURAL_DISASTER_IMG("Get natural disaster img"),
     GET_NATURAL_DISASTER_TYPE_LIST("Get natural disaster type list"),
-    GET_NC_TYPE_LIST("Get NC type list");
+    GET_NC_TYPE_LIST("Get NC type list"),
+    AI_CHAT("AI chat");
 
     final String description;
 
