@@ -2,7 +2,7 @@ class EarthRotator {
     constructor(viewer) {
         this.viewer = viewer;
         this.rotateActive = false;
-        this.delta = 0.003; // 每帧旋转角度
+        this.delta = 0.003;
     }
 
     start() {
@@ -17,8 +17,7 @@ class EarthRotator {
 
     rotate = () => {
         if (this.rotateActive) {
-            viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
+            this.viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
         }
     };
 }
-

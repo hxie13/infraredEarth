@@ -1546,7 +1546,7 @@
                   }
                   rotate = () => {
                     if (this.rotateActive) {
-                      viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
+                      this.viewer.scene.camera.rotate(Cesium.Cartesian3.UNIT_Z, -this.delta);
                     }
                   };
                 }
@@ -2608,7 +2608,9 @@
 				    location:location,
                     position: Cesium.Cartesian3.fromDegrees(lon, lat),
                     billboard: {
-                     image: "./res/position.png",
+                     image: "./res/marker.svg",
+                    width: 36,
+                    height: 48,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                     }
                     });	
@@ -2979,51 +2981,84 @@
                         var rotation = Cesium.Math.toRadians(300);
                      
                         function getRotationValue() {
-                            rotation += -0.03;
+                            rotation += -0.008;
                             return rotation;
                         }
                      
+                        // 外层风圈（半透明大范围）
+                        viewer.entities.add({
+                            position : property,
+                            availability : new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start, stop })]),
+                            ellipse : {
+                                semiMinorAxis : 120000.0,
+                                semiMajorAxis : 120000.0,
+                                height: 0.0,
+                                material: Cesium.Color.fromCssColorString('rgba(255,100,50,0.08)'),
+                                outline: true,
+                                outlineColor: Cesium.Color.fromCssColorString('rgba(255,120,60,0.25)'),
+                                outlineWidth: 1
+                            }
+                        });
+                        // 中层风圈
+                        viewer.entities.add({
+                            position : property,
+                            availability : new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start, stop })]),
+                            ellipse : {
+                                semiMinorAxis : 65000.0,
+                                semiMajorAxis : 65000.0,
+                                height: 0.0,
+                                material: Cesium.Color.fromCssColorString('rgba(255,80,40,0.12)'),
+                                outline: true,
+                                outlineColor: Cesium.Color.fromCssColorString('rgba(255,100,50,0.35)'),
+                                outlineWidth: 1
+                            }
+                        });
+                        // 台风核心实体
                         const typhoonEntity = viewer.entities.add({
                             name : '台风路径',
-                            availability : new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
-                                start : start,
-                                stop : stop
-                            })]),
+                            availability : new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start, stop })]),
                             position : property,
-                            orientation : new Cesium.VelocityOrientationProperty(property), // 根据位置移动自动计算方向
+                            orientation : new Cesium.VelocityOrientationProperty(property),
                             ellipse : {
                                 semiMinorAxis : 35000.0,
                                 semiMajorAxis : 35000.0,
                                 height: 0.0,
                                 fill: true,
-                                outlineColor: Cesium.Color.RED,
-                                outlineWidth: 10,
-                                outline : false,
+                                outline : true,
+                                outlineColor: Cesium.Color.fromCssColorString('rgba(255,60,30,0.5)'),
+                                outlineWidth: 2,
                                 rotation: new Cesium.CallbackProperty(getRotationValue, false),
                                 stRotation: new Cesium.CallbackProperty(getRotationValue, false),
                                 material: new Cesium.ImageMaterialProperty({
-                                    image: "./res/tf.png",
+                                    image: "./res/typhoon.svg",
                                     transparent: true
                                 })
                             },
                             point : {
-                                pixelSize : 10,
-                                color : Cesium.Color.TRANSPARENT,
-                                outlineColor : Cesium.Color.YELLOW,
-                                outlineWidth : 4
+                                pixelSize : 8,
+                                color : Cesium.Color.fromCssColorString('#ff4444'),
+                                outlineColor : Cesium.Color.WHITE,
+                                outlineWidth : 2
                             },
                             label : {
                                 text: typhoonName,
-                                font : '18px sans-serif',
-                                pixelOffset : new Cesium.Cartesian2(0.0, 50)
+                                font : 'bold 15px "Noto Sans SC", sans-serif',
+                                fillColor: Cesium.Color.WHITE,
+                                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                                outlineColor: Cesium.Color.BLACK,
+                                outlineWidth: 2,
+                                pixelOffset : new Cesium.Cartesian2(0.0, -55),
+                                showBackground: true,
+                                backgroundColor: Cesium.Color.fromCssColorString('rgba(20,20,40,0.7)'),
+                                backgroundPadding: new Cesium.Cartesian2(10, 6)
                             },
                             path : {
                                 resolution : 1,
                                 material : new Cesium.PolylineGlowMaterialProperty({
-                                    glowPower : 0.9,
-                                    color : Cesium.Color.YELLOW
+                                    glowPower : 0.3,
+                                    color : Cesium.Color.fromCssColorString('#ff6b35')
                                 }),
-                                width : 1
+                                width : 4
                             }
                         })
                         pineAll.push(typhoonEntity);
@@ -3042,7 +3077,7 @@
                          preUpdateHandler = function(){
                             if(typhoonEntity){
                                 const center = typhoonEntity.position.getValue(viewer.clock.currentTime);
-                                const hpr = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(0.0), Cesium.Math.toRadians(-90), 2000000)
+                                const hpr = new Cesium.HeadingPitchRange(Cesium.Math.toRadians(0.0), Cesium.Math.toRadians(-70), 800000)
                                 if(center){
                                     viewer.camera.lookAt(center, hpr);
 									
@@ -3065,7 +3100,7 @@
                         const property = new Cesium.SampledPositionProperty();
                         for(let i=0; i<positions.length; i++){
                             const time = Cesium.JulianDate.addSeconds(start, i, new Cesium.JulianDate());
-                            const position = Cesium.Cartesian3.fromDegrees(parseFloat(positions[i].fLongitude), parseFloat(positions[i].fLatitude), Cesium.Math.nextRandomNumber() * 500 + 1750);
+                            const position = Cesium.Cartesian3.fromDegrees(parseFloat(positions[i].fLongitude), parseFloat(positions[i].fLatitude), 2000);
                             property.addSample(time, position);
                         }
                         return property;
@@ -3092,15 +3127,16 @@
 
 				              // 清除台风效果
                                function clearTaiFeng(){
-							   const pointEntities = [];
 				               positions.length = 0;
-				                //存储台风飞行
-				               preUpdateHandler = null
+                                   // 先移除监听器再置空（修复顺序 Bug）
+                                   if(preUpdateHandler){
+                                       viewer.scene.preUpdate.removeEventListener(preUpdateHandler);
+                                   }
+                                   preUpdateHandler = null;
                                    if(pineAll.length>0){
                                        pineAll.forEach((item)=>{
                                            viewer.entities.remove(item)
                                        })
-                                
                                    }
                                    if(pointAll.length>0){
                                        pointAll.forEach((item)=>{
@@ -3109,11 +3145,6 @@
                                    }
                                    pineAll.length=0;
                                    pointAll.length=0;
-                                   // 清除台风飞行飞行跟踪
-                                   if(preUpdateHandler){
-                                       viewer.scene.preUpdate.removeEventListener(preUpdateHandler);
-                                   }
-                                
                                }
 
 

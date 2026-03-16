@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="eye" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a3e" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#1a1a3e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff6b35" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#ff4444" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff2222" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Outer glow -->
+  <circle cx="256" cy="256" r="250" fill="url(#glow)"/>
+  <!-- Spiral arms -->
+  <g fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M256,256 Q320,180 380,170 Q440,160 460,220 Q480,280 440,340 Q400,400 330,410 Q260,420 220,380 Q180,340 200,280 Q220,220 256,256"
+          stroke="rgba(255,255,255,0.9)" stroke-width="18"/>
+    <path d="M256,256 Q190,330 130,340 Q70,350 50,290 Q30,230 70,170 Q110,110 180,100 Q250,90 290,130 Q330,170 310,230 Q290,290 256,256"
+          stroke="rgba(255,255,255,0.9)" stroke-width="18"/>
+    <!-- Inner detail arms -->
+    <path d="M256,256 Q300,210 340,200 Q380,190 400,230 Q420,270 390,310 Q360,350 310,355 Q260,360 240,330 Q220,300 240,270 Q250,256 256,256"
+          stroke="rgba(255,220,200,0.7)" stroke-width="10"/>
+    <path d="M256,256 Q210,300 170,310 Q130,320 110,280 Q90,240 120,200 Q150,160 200,155 Q250,150 270,180 Q290,210 270,240 Q260,256 256,256"
+          stroke="rgba(255,220,200,0.7)" stroke-width="10"/>
+  </g>
+  <!-- Eye -->
+  <circle cx="256" cy="256" r="22" fill="url(#eye)"/>
+  <circle cx="256" cy="256" r="16" fill="none" stroke="rgba(255,200,150,0.6)" stroke-width="3"/>
+</svg>
