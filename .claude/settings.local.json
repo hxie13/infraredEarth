@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cd d:/code/java/InfraredEarth/infraredEarth/Back-End && mvn clean package -q 2>&1 | tail -30)"
+      "Bash(cd d:/code/java/InfraredEarth/infraredEarth/Back-End && mvn clean package -q 2>&1 | tail -30)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)"
     ]
   }
 }
